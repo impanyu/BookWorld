@@ -24,11 +24,15 @@ class RPAgent:
                  llm_name: str = "gpt-4o-mini",
                  llm = None,
                  embedding_name: str = "bge-small",
-                 embedding = None
+                 embedding = None,
+                 short_term_word_price: float = 0.0,
+                 long_term_word_price: float = 0.0
                  ):
         super(RPAgent, self).__init__()
         self.language: str  = language
         self.role_code: str = role_code
+        self.short_term_word_price = short_term_word_price
+        self.long_term_word_price = long_term_word_price
         
         self.history_manager = HistoryManager()
         self.prompts: List[Dict] = []
@@ -441,6 +445,28 @@ class RPAgent:
     def record(self, 
                 record):
         self.history_manager.add_record(record)
+    
+    def calculate_storage_cost(self) -> dict:
+        """Calculate the total storage cost based on word counts in short-term and long-term memory.
+        
+        Returns:
+            dict: Contains short_term_words, long_term_words, short_term_cost, 
+                  long_term_cost, and total_cost.
+        """
+        short_term_words = self.history_manager.total_word_count
+        long_term_words = self.memory.total_word_count
+        
+        short_term_cost = short_term_words * self.short_term_word_price
+        long_term_cost = long_term_words * self.long_term_word_price
+        total_cost = short_term_cost + long_term_cost
+        
+        return {
+            "short_term_words": short_term_words,
+            "long_term_words": long_term_words,
+            "short_term_cost": short_term_cost,
+            "long_term_cost": long_term_cost,
+            "total_cost": total_cost
+        }
         
     def save_prompt(self,prompt,detail):
         if prompt:
@@ -510,7 +536,7 @@ class RPAgent:
             
     def __getstate__(self):
         states = {key: value for key, value in self.__dict__.items() \
-            if isinstance(value, (str, int, list, dict, bool, type(None))) \
+            if isinstance(value, (str, int, float, list, dict, bool, type(None))) \
                 and key not in ['role_info','role_data','llm','embedding','db',"memory"]
                 and "PROMPT" not in key}
         return states

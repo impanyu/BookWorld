@@ -6,4 +6,4 @@ run.sh
 /config/
 .vscode/
 nohup.out
-BookWorld_test.py
+BookWorld_test.pyvenv/

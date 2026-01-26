@@ -8,6 +8,14 @@ import os
 class HistoryManager:
     def __init__(self):
         self.detailed_history = []
+        self.total_word_count = 0
+
+    @staticmethod
+    def count_words(text: str) -> int:
+        """Count words in a text string."""
+        if not text:
+            return 0
+        return len(text.split())
 
     def add_record(self, record):
         """添加一个事件记录
@@ -23,6 +31,9 @@ class HistoryManager:
             "record_id":record_id
         }
         """
+        # Track word count from the detail field
+        if "detail" in record:
+            self.total_word_count += self.count_words(record["detail"])
         self.detailed_history.append(record)
 
     def modify_record(self, record_id: str, detail: str):
