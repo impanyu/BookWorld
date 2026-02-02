@@ -14,23 +14,31 @@ class StatusPanel {
     }
 
     init() {
-        // 设置默认状态
-        this.updateAllStatus(this.currentStatus);
-        this.updateSettings([]);
-        
-        // 监听WebSocket消息
-        window.addEventListener('websocket-message', (event) => {
-            const message = event.detail;
+        const setup = () => {
+            // 设置默认状态
+            this.updateAllStatus(this.currentStatus);
+            this.updateSettings([]);
             
-            if (message.type === 'status_update') {
-                this.updateAllStatus(message.data);
-            }
-            
-            if (message.type === 'initial_data' && message.data.status) {
-                this.updateAllStatus(message.data.status);
-                this.updateSettings(message.data.settings);
-            }
-        });
+            // 监听WebSocket消息
+            window.addEventListener('websocket-message', (event) => {
+                const message = event.detail;
+                
+                if (message.type === 'status_update') {
+                    this.updateAllStatus(message.data);
+                }
+                
+                if (message.type === 'initial_data' && message.data.status) {
+                    this.updateAllStatus(message.data.status);
+                    this.updateSettings(message.data.settings);
+                }
+            });
+        };
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', setup);
+        } else {
+            setup();
+        }
     }
 
     updateEvent(eventText) {
@@ -95,4 +103,5 @@ class StatusPanel {
     }
 }
 
-const statusPanel = new StatusPanel();
+// 导出类供 RightSection 使用，移除全局初始化
+window.StatusPanel = StatusPanel;

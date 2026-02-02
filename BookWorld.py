@@ -264,6 +264,7 @@ class Server():
             start_idx = len(self.history_manager)
 
             sub_round = sub_start_round
+            last_actor_code = ""
             for sub_round in range(sub_start_round,3):
                 if self.mode == "script":    
                     self.script_instruct(self.progress)
@@ -273,8 +274,14 @@ class Server():
 
                 for role_code in group:
                     if scene_mode:
-                        role_code =  self._name2code(self.world_agent.decide_next_actor("\n".join(self.history_manager.get_recent_history(3)),self._get_group_members_info_text(group,status=True),self.script)) if scene_mode else role_code
+                        role_code =  self._name2code(self.world_agent.decide_next_actor(
+                            history_text = "\n".join(self.history_manager.get_recent_history(3)),
+                            roles_info_text = self._get_group_members_info_text(group,status=True),
+                            script = self.script,
+                            last_actor_code = last_actor_code
+                        )) if scene_mode else role_code
                     
+                    last_actor_code = role_code
                     yield from self.implement_next_plan(role_code = role_code,
                                             group = group)
                     self._save_current_simulation("action", current_round, sub_round)
@@ -871,9 +878,7 @@ class Server():
             meta_info = load_json_file(os.path.join(save_dir, "./meta_info.json"))
             filename = os.path.join(save_dir, f"./server_info.json")
             states = load_json_file(filename)
-            self.__setstate__(states)   
-            for role_code in self.role_codes:
-                self.role_agents[role_code].load_from_file(save_dir) 
+            self.__setstate__(states)
             self.world_agent.load_from_file(save_dir)
             self.history_manager.load_from_file(save_dir)
             
@@ -881,6 +886,9 @@ class Server():
                 for code in record["group"]:
                     if code in self.role_codes:
                         self.role_agents[code].record(record)
+                        
+            for role_code in self.role_codes:
+                self.role_agents[role_code].load_from_file(save_dir) 
         else:
             meta_info = {
                 "location_setted":False,
@@ -975,7 +983,11 @@ class BookWorld():
         return characters_info
 
     def generate_next_message(self):
-        message_type, code, text,message_id = next(self.generator)
+        try:
+            message_type, code, text,message_id = next(self.generator)
+        except StopIteration:
+            return None
+            
         if message_type == "role":
             username = self.server.role_agents[code].role_name
             icon_path = self.server.role_agents[code].icon_path
@@ -1020,6 +1032,26 @@ class BookWorld():
         for code in group:
             self.server.role_agents[code].history_manager.modify_record(record_id,new_text)
         return
+
+    def handle_user_message(self, text):
+        import uuid
+        record_id = str(uuid.uuid4())
+        # 将用户消息记录为系统干预，告知所有角色
+        self.server.record(
+            role_code="user",
+            detail=f"【用户干预】: {text}",
+            actor_type="system",
+            act_type="intervention",
+            group=self.server.role_codes,
+            actor="user",
+            record_id=record_id
+        )
+        # 更新当前事件，使干预具有持续影响力
+        if self.server.event:
+            self.server.event += f"\n[用户干预]: {text}"
+        else:
+            self.server.event = f"[用户干预]: {text}"
+        return record_id
 
     def get_history_messages(self,save_dir):
         

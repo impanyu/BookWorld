@@ -2,6 +2,7 @@ anthropic
 beautifulsoup4
 chromadb
 fastapi
+flask
 langchain
 langchain_experimental
 modelscope
@@ -14,3 +15,5 @@ uvicorn
 pillow
 faiss-cpu
 huggingface_hub[cli]
+websockets
+requests

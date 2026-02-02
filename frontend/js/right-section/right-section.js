@@ -3,11 +3,11 @@ class RightSection {
     constructor() {
         this.currentTab = 'status-panel'; // 默认激活的标签
         
-        // 初始化SettingsPanel，但不处理APIPanel
-        setTimeout(() => {
-            this.settingsPanel = new SettingsPanel();
-            console.log('RightSection: SettingsPanel初始化完成');
-        }, 200);
+        // 初始化各个子面板
+        this.statusPanel = new StatusPanel();
+        this.settingsPanel = new SettingsPanel();
+        
+        console.log('RightSection: 面板初始化完成');
         
         this.init();
     }

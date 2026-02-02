@@ -107,21 +107,11 @@ def relevance_score_fn(score: float) -> float:
     return 1.0 - score / math.sqrt(2)
 
 class RoleMemory_GA(GenerativeAgentMemory):
-    total_word_count: int = 0
-    
     def init_from_data(self,data):
         for text in data:
             self.add_record(text)
     
-    @staticmethod
-    def count_words(text: str) -> int:
-        """Count words in a text string."""
-        if not text:
-            return 0
-        return len(text.split())
-    
     def add_record(self,text):
-        self.total_word_count += self.count_words(text)
         self.add_memory(text)
     
     def search(self,query,top_k):
@@ -141,14 +131,6 @@ class RoleMemory:
         self.capacity = capacity
         self.db_name = db_name
         self.db = build_db([],db_name,db_type,embedding,save_type="temporary")
-        self.total_word_count = 0
-    
-    @staticmethod
-    def count_words(text: str) -> int:
-        """Count words in a text string."""
-        if not text:
-            return 0
-        return len(text.split())
     
     def init_from_data(self,data):
         for text in data:
@@ -156,7 +138,6 @@ class RoleMemory:
     
     def add_record(self,text):
         self.idx += 1
-        self.total_word_count += self.count_words(text)
         self.db.add(text, str(self.idx), db_name=self.db_name)
     
     def search(self,query,top_k):

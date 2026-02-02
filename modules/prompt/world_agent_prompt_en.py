@@ -28,7 +28,10 @@ Example Output:
 
 DECIDE_NEXT_ACTOR_PROMPT = """
 You are an administrator of a virtual world. Based on the information provided below, you need to decide who will be the next acting character.
-Characters who have participated in conversations are less likely to be chosen.
+Characters who have participated in conversations are less likely to be chosen. Do not select the same character twice in a row unless there is only one character available.
+
+## Last Acting Character (Do not select again)
+{last_actor}
 
 ## Available Roles
 {roles_info}

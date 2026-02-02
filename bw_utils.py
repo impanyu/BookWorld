@@ -38,10 +38,14 @@ def get_models(model_name):
             return LangChainGPT(model="gpt-3.5-turbo")
         elif model_name == 'gpt-4' or model_name == 'gpt-4-turbo':
             return LangChainGPT(model="gpt-4")
-        elif model_name == 'gpt-4o':
-            return LangChainGPT(model="gpt-4o")
-        elif model_name == "gpt-4o-mini":
+        elif model_name.startswith('gpt-4o-mini'):
             return LangChainGPT(model="gpt-4o-mini")
+        elif model_name.startswith('gpt-4o'):
+            # Handles gpt-4o, gpt-4o-2024-11-20, etc.
+            return LangChainGPT(model=model_name)
+        else:
+            # Fallback for other GPT models
+            return LangChainGPT(model=model_name)
     elif model_name.startswith("claude"):
         from modules.llm.Claude import Claude
         if model_name.startswith("claude-3.5-sonnet"):
@@ -358,9 +362,21 @@ def check_role_code_availability(role_code,role_file_dir):
 def get_grandchild_folders(root_folder, if_full = True):
     folders = []
     for resource in os.listdir(root_folder):
-        subpath = os.path.join(root_folder,resource)
+        # Skip hidden files like .DS_Store
+        if resource.startswith('.'):
+            continue
+        subpath = os.path.join(root_folder, resource)
+        # Skip if not a directory
+        if not os.path.isdir(subpath):
+            continue
         for folder_name in os.listdir(subpath):
+            # Skip hidden files
+            if folder_name.startswith('.'):
+                continue
             folder_path = os.path.join(subpath, folder_name)
+            # Only include directories
+            if not os.path.isdir(folder_path):
+                continue
             if if_full:
                 folders.append(folder_path)
             else:

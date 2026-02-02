@@ -1,0 +1,118 @@
+{
+ "llm_name": "gpt-4o-2024-11-20",
+ "summary": "血色婚礼刚刚结束————这是一场艾德慕·徒利（凯特琳·史塔克的弟弟）与罗莎琳·弗雷的婚礼，罗柏·史塔克为了修复与弗雷家族关系而策划的政治联姻，却在泰温兰尼斯特与老瓦德伯爵共同策划的阴谋下，演变成了一场彻头彻尾的悲剧。凯特琳、罗柏被杀，几乎所有的史塔克军人都被杀死，佛雷、波顿一方仅仅付出了大约五十人的伤亡代价。此事让兰尼斯特家族的实力大大增强，让史塔克家族与兰尼斯特家族之间的仇恨变得无可挽回。众人需要对这一事件做出反应。",
+ "source": "A_Song_of_Ice_and_Fire",
+ "eval_result": {
+  "bookworld": {
+   "scoring": {
+    "score": {
+     "Creativity": 6,
+     "Anthropomorphism": 6,
+     "Character Fidelity": 6,
+     "Writing Quality": 6,
+     "Immersion & Setting": 6
+    }
+   }
+  },
+  "naive": {
+   "scoring": {
+    "score": {
+     "Creativity": 6,
+     "Anthropomorphism": 6,
+     "Character Fidelity": 6,
+     "Writing Quality": 5,
+     "Immersion & Setting": 6
+    }
+   },
+   "winner": {
+    "winner": {
+     "Creativity": "bookworld",
+     "Anthropomorphism": "bookworld",
+     "Character Fidelity": "bookworld",
+     "Writing Quality": "bookworld",
+     "Immersion & Setting": "bookworld"
+    }
+   }
+  },
+  "naive_multi": {
+   "scoring": {
+    "score": {
+     "Creativity": 4,
+     "Anthropomorphism": 4,
+     "Character Fidelity": 3,
+     "Writing Quality": 5,
+     "Immersion & Setting": 5
+    }
+   },
+   "winner": {
+    "winner": {
+     "Creativity": "bookworld",
+     "Anthropomorphism": "bookworld",
+     "Character Fidelity": "bookworld",
+     "Writing Quality": "bookworld",
+     "Immersion & Setting": "bookworld"
+    }
+   }
+  },
+  "hollmwood": {
+   "scoring": {
+    "score": {
+     "Creativity": 4,
+     "Anthropomorphism": 4,
+     "Character Fidelity": 3,
+     "Writing Quality": 5,
+     "Immersion & Setting": 4
+    }
+   },
+   "winner": {
+    "winner": {
+     "Creativity": "bookworld",
+     "Anthropomorphism": "bookworld",
+     "Character Fidelity": "bookworld",
+     "Writing Quality": "bookworld",
+     "Immersion & Setting": "bookworld"
+    }
+   }
+  }
+ },
+ "generated_script": {
+  "bookworld": "提利昂: 【提利昂的内心涌动着复杂的情绪，他对血色婚礼感到厌恶，但在兰尼斯特家族的阴影下，他必须谨慎行事。他明白珊莎正在试探他，或许也在寻求某种希望。】「珊莎，我渴望的世界确实比这更公正，但可惜，我的家族从未以公正为立足之本。血色婚礼的血腥让我作呕，但在这场棋局中，我只是一个渺小的棋子，而非执棋之人。」（提利昂叹了口气，抬头与珊莎对视，眼神中带着一丝坦诚与无奈。）\n珊莎: 【珊莎感受到提利昂的坦诚，但她也清楚他的无奈并非等同于站在自己一边。她需要进一步测试他的立场，找出他是否愿意在这场斗争中冒险与兰尼斯特家族决裂。】「或许你不是执棋之人，但每一颗棋子都有选择站在哪一边的机会。提利昂，如果有一天你能脱离兰尼斯特的阴影，你会选择一个怎样的世界？」（珊莎的声音柔和而低沉，但眼神中透出坚定。）\n提利昂: 【提利昂的心中掀起一阵复杂的波澜，珊莎的话如同一把利刃，划开了他内心深处对自由与正义的渴望，但他清楚，这种渴望不能轻易示人。】「一个怎样的世界？一个不用再因家族之名而背负罪孽的世界。或许这太过理想化，但如果有一天我能脱离兰尼斯特的阴影，我会选择一个不再被血与权力浸透的未来。」（提利昂轻轻举起酒杯，似乎在掩饰眼中的复杂情绪，随后又放下。）\n詹姆: 「提利昂，血色婚礼的后果已经显现。瑟曦的计划正在加深仇恨，我担忧这种冲突会毁掉我们所有人。你怎么看？」（詹姆的语气低沉，目光复杂，显得既关心又无奈。）\n提利昂: 【提利昂感受到詹姆的忧虑，这与他自己的担忧不谋而合。他知道，瑟曦的野心与冷酷只会加剧仇恨，将所有人推向毁灭的深渊。】「詹姆，你的担忧并非多余。瑟曦的计划确实让兰尼斯特的敌人更加坚定了复仇的决心。而最令人担心的是，我们的家族并未因这场血腥的胜利变得更安全，反而更孤立了。继续沿着这条路走下去，我们只会被仇恨吞噬，直到再也没有盟友，甚至连家人也无法信任。」（提利昂缓缓饮下一口酒，目光凝视着詹姆，带着一丝苦涩的笑意。）\n詹姆: 【詹姆感到提利昂的话击中了他的内心。家族的孤立、仇恨的激化，这些都在吞噬他们，甚至瑟曦的所作所为让他也开始质疑自己的立场。】「你说得对，提利昂。我们正在用敌人的尸骨筑起一座孤塔，但我不知道这条路上还有没有回头的机会。我们该如何避免被仇恨彻底吞噬？」（詹姆目光沉重，伸手拿起酒杯，却只是轻轻地晃动，没有饮下。）\n提利昂: 【提利昂看着詹姆，感到一丝痛苦与无奈。詹姆的挣扎让他意识到，这座孤塔不仅是由尸骨构筑，也是由他们的良知与亲情的裂痕筑成。】「詹姆，我想回头的路并非全然消失，但它从未是坦途。或许，我们无法消除所有的仇恨，但我们可以选择不再加深它。与其建造一座孤塔，不如试着架起一座桥，哪怕那桥可能随时坍塌。」（提利昂轻轻举杯示意，却没有饮下，目光中带着复杂的坚定。）\n珊莎: 【珊莎感受到提利昂的内心矛盾与挣扎，他的坦白让她看到了一丝希望，但她知道不能操之过急。她需要进一步引导他的思考，同时为未来的合作埋下伏笔。】「提利昂，有些棋子也许渺小，但在关键时刻，它们可以改变棋局。我相信你有智慧和勇气去选择自己的道路。或许未来，我们能站在同一边。」（珊莎语气温和却坚定，目光中带着期待与信任。）\n提利昂: 【提利昂感受到珊莎话语中的信任与隐含的希望。他明白，尽管两人曾被置于敌对的家族中，但他们的命运早已交织，或许也有共同的敌人。】「珊莎，你的信任让我受宠若惊。渺小的棋子虽然可以改变棋局，但只有当棋手愿意冒险时才有意义。我愿意听听你的计划，也许，我们真的能找到一条不那么血腥的路。」（提利昂露出一抹复杂的微笑，举起酒杯向她致意。）\n烛光在阴沉的厅堂中微微跳动，映照着提利昂与珊莎的面庞。言语间的试探与坦诚如刀锋般交错，詹姆的沉思则为空气增添了一层压抑的重量。酒杯轻轻触碰，仿佛为这场隐秘的较量画下一个短暂的句点，但未解的矛盾仍在暗流涌动。\n雪诺: 【雪诺思考着血色婚礼的惨剧，内心充满悲痛和愤怒。史塔克家族的血债必须偿还，但眼下北境的安全和异鬼的威胁更为迫切。他知道自己需要在复仇和守夜人职责之间找到平衡。】（雪诺站在长城上，目光凝视远方，思索着如何团结北境诸侯，既为史塔克家族复仇，又能说服他们关注长城以北的真正威胁。）\n雪诺伫立在长城之巅，寒风如刀，吹乱他的黑发。他的目光穿过白雪皑皑的旷野，思绪却回到了血色婚礼的惨剧。复仇的火焰在他心底燃烧，但眼下的寒冷提醒着他，北境的存亡系于异鬼的威胁。北方的未来，如这天际的灰云，压抑而沉重。\n丹妮莉丝: 【丹妮莉丝思考着目前的局势，血色婚礼的消息让她看到了北境与兰尼斯特家族之间的裂痕，这可能为她的征服提供机会。她意识到，争取琼恩·雪诺的支持不仅能得到北境的力量，也能团结人类对抗异鬼威胁。】「兰尼斯特家族的权力正在增长，但他们的敌人也在增加。北境的仇恨可以成为我的盟友。现在是时候制定计划，与琼恩·雪诺建立联系，展现我的力量与诚意。」（丹妮莉丝转向地图，仔细观察北境与长城的地理位置，开始筹划接触琼恩的方式。）\n烛光摇曳在龙石岛的大厅，映照着丹妮莉丝沉思的面庞。她的目光紧锁在北境的地图上，指尖轻触长城的轮廓，仿佛已踏上那片寒冷的土地。远处传来海浪拍击的低鸣，似在回应她的野心与决心。征途的方向已然清晰，而她的心中，火与冰的碰撞才刚刚开始。\n丹妮莉丝骑乘卓耿，翱翔于寒风之上，朝临冬城飞去，决心与琼恩·雪诺建立关键联盟。\n瑟曦: 【瑟曦观察着艾莉亚的表情，意识到她的隐忍中蕴藏着危险，但这正是她可以利用的弱点。】「多么倔强的小狼啊，但你认为复仇能让北境复兴吗？血色婚礼不是结束，而是开始。你们的每一步都在我的掌控之中，反抗只会让更多人流血。艾莉亚，你或许应该考虑一个更聪明的选择。」（瑟曦微微前倾，语气中带着试探与威胁。）\n艾莉亚: 【艾莉亚心中充满警惕，瑟曦的试探和威胁显然是为了动摇她的决心。她知道，绝不能让对方察觉到她的真实意图。】「聪明的选择？兰尼斯特夫人，我想您和我对‘聪明’的定义可能截然不同。我只知道，掌控别人的命运并不能让您真正安全。」（艾莉亚嘴角微微上扬，带着一丝冷笑，眼神却如刀般锐利。）\n瑟曦: 【瑟曦微微眯起眼睛，艾莉亚的冷笑和话语虽带刺，但也暴露了她的信念根基——她相信‘安全’来源于掌控之外的力量，而非自身。这种天真的想法正是可以利用的突破口。】「安全？小狼，你真的相信世间有绝对的安全可言？掌控命运或许无法让我完全安全，但它至少让我活着，而你的父亲、你的兄长，甚至你们的家族呢？他们又得到了什么？不过是盲目信仰与愚忠的代价罢了。」（瑟曦慢慢站起身，走向窗边，语气平静却带着丝丝嘲讽，目光依然没有从艾莉亚身上移开。）\n艾莉亚: 【艾莉亚感到一阵刺痛，瑟曦的嘲讽勾起了她对家人的回忆，但她迅速压下情绪，不让对方看出任何破绽。她明白，瑟曦的话意在削弱她的信念。】「兰尼斯特夫人，我的父亲和兄长选择了他们认为正确的道路，而您选择了另一条。也许结果确实不同，但您的安全，只是暂时的假象罢了。」（艾莉亚缓缓迈前一步，目光如冰，嘴角挂着一抹微不可察的冷笑，仿佛在无声地宣告：猎手与猎物的关系，尚未定论。）\n瑟曦: 【瑟曦注视着艾莉亚的冷笑，心中生出一丝警惕，这个女孩的镇定超出了她的预期，但她同时意识到艾莉亚的愤怒是可以利用的突破口。】「假象？也许吧，但假象至少能让我站在这里，而不是像你那可怜的兄长和父亲一样，成为一堆冷冰冰的尸体。艾莉亚，你的复仇也许会为你带来片刻的满足，但你是否想过，北境还有什么可以承受这场无止境的血债？有时候，聪明的人知道该什么时候放下刀。」（瑟曦嘴角勾起一抹讽刺的笑容，缓缓走近几步，目光牢牢锁定对方。）\n艾莉亚: 【艾莉亚的目光微微眯起，瑟曦的话像毒蛇的低语，试图钻进她的防线，但她深知对方不过是用言辞掩饰自己的恐惧。】「兰尼斯特夫人，您站在这里的每一刻，都建立在谎言和鲜血之上。或许聪明的人知道什么时候放下刀，但有时候，刀也会选择主人。」（艾莉亚的声音低沉，带着一丝冷酷的寒意，她缓缓后退半步，像是在伺机而动。）\n艾莉亚: 【艾莉亚感到瑟曦的讽刺意图明显，但她深知对方的每一句话都隐藏着试探与操控的目的。她必须表现得更加冷酷，才能让瑟曦意识到她不会轻易被动摇。】「放下刀？兰尼斯特夫人，您不也一直握着刀吗？只是，您握刀的手已经开始颤抖了吧？」（艾莉亚微微侧头，语气平静而冰冷，眼神却如针般刺向瑟曦。）\n瑟曦: 【瑟曦心中掠过一丝愤怒和不安，艾莉亚的冷静和直言直语显然意在动摇她的信心，但瑟曦深知自己绝不能显露任何弱点。】「颤抖？小狼，真正颤抖的是那些被复仇驱使，却无法看清全局的人。你或许能用刀杀死几个人，但你永远无法扭转命运的洪流。北境的复仇，只会让更多人陪葬，而我会是最后的赢家。」（瑟曦嘴角浮现一抹冷笑，转身倚靠在桌边，语气带着嘲弄的从容。）\n艾莉亚: 【艾莉亚感到瑟曦的自信充满傲慢，但她知道，对方的每一句话都试图削弱她的意志。瑟曦以为自己掌控全局，却不知猎物的命运早已注定。】「命运的洪流？兰尼斯特夫人，命运从不青睐那些自诩为赢家的人。您会是最后的赢家？不，您只是尚未意识到自己已被狩猎的鹿。」（艾莉亚微微前倾，眼神如刀锋般锐利，嘴角的冷笑转瞬即逝，像是为猎物送上的最后的礼仪。）\n瑟曦: 【瑟曦感到艾莉亚的气势像一把无形的刀，但她知道自己绝不能在气势上落于下风。艾莉亚的言辞表明她的复仇之心已深，但瑟曦也明白，情感往往是最容易操控的武器。】「狩猎的鹿？多么诗意的比喻，可惜，鹿有时会反击，甚至踩死自以为是的猎人。艾莉亚，你对命运的理解或许太过狭隘了。命运从不偏爱任何人，它只偏爱那些懂得操控它的人。」（瑟曦冷冷一笑，目光如冰般直视艾莉亚，语气中带着一丝不屑的挑衅。）\n艾莉亚: 【艾莉亚感到瑟曦的挑衅意在试图动摇她的信念，但她心中清楚，对方所谓的操控不过是掩盖恐惧的假象。】「操控命运？夫人，您误解了。我不是猎人，也不是鹿。我是夜幕中的影子，命运也无法捕捉的存在。」（艾莉亚冷笑一声，语气低沉而锋利，像是划过黑暗的利刃。）\n瑟曦与艾莉亚在昏暗的房间中对峙，言辞如利刃般交锋。窗外的暮色渐浓，冷风透过缝隙侵入，似乎为这场无声的较量增添了几分寒意。两人话语中暗藏的威胁与试探将空气压得更为凝重，却没有一方率先迈出致命一步。对峙之下，猎手与猎物的界限愈发模糊，仿佛命运的棋盘正在悄然重置。\n布兰: 【布兰感受到北境局势的复杂和紧迫，尤其是异鬼的威胁愈发清晰。他认为雪诺必须意识到联盟的重要性。】「雪诺，血色婚礼后的北境满目疮痍，但我们不能仅停留在仇恨里。异鬼的威胁比兰尼斯特更为可怕。我们需要团结一切可能的力量，包括丹妮莉丝。」（布兰的目光凝视着雪诺，语气沉稳而带有一种超然的笃定。）\n雪诺: 【雪诺感受到布兰的笃定，内心挣扎于复仇的渴望与北境存亡的大局之间。他明白布兰的视角不同，或许更能看清未来的威胁。】「布兰，我的心中仍燃烧着复仇的怒火，但你说得对，异鬼才是更大的威胁。如果丹妮莉丝愿意真心帮助北境，我会考虑与你们联手。」（雪诺的语气低沉却坚定，眼神中透出复杂的情感。）\n雪诺: 【雪诺站在寒风中，思索着北境的未来，心情复杂。他知道复仇的渴望不能盖过异鬼的威胁，但内心仍有挣扎。】「布兰，你的视野比我更广阔。如果你确信丹妮莉丝能成为我们的盟友，我愿意听取你的建议。但北境诸侯对外来者的敌意是个障碍，你觉得该如何打破这种隔阂？」（雪诺的语气低沉，目光凝重，似乎在试探布兰的智慧。）\n布兰: 【布兰感到雪诺的矛盾，但他知道北境的存亡需要突破传统的桎梏。】「北境的诸侯信任你，而你需要向他们展现坦格利安女王的真诚。她的龙将是异鬼的天敌，而她若愿亲自前来北境，展现对我们土地的尊重和理解，这将打破隔阂。」（布兰语气平静，目光深邃，仿佛看穿了未来。）\n雪诺: 【雪诺凝视布兰深邃的目光，心中掠过复杂的情绪。他明白布兰的话语并非仅是建议，而是某种更高视角的洞察。他的内心挣扎于北境传统的骄傲与现实的危机，但最终，他选择了务实。】「你说得对，布兰。如果她愿意亲自来北境，向我们的人民展现她的诚意，我会向诸侯们传达她的决心。但如果她的态度中有任何傲慢，北境的心不会向她敞开。」（雪诺目光坚定，声音中透着冷峻的决断。）\n",
+  "naive": "```  \n## Scene Context:  \nThe setting is a cold, dimly lit hall in Winterfell. Snow falls gently outside the castle, and the tension is palpable as a group of key players gathers to discuss the fate of Westeros. The characters are wary of one another, alliances are fragile, and everyone has their own agenda.\n\n---\n\n珊莎:[wary, but composed](stands at the head of the table, her hands resting on the wood)The North remembers, but it does not forgive easily. Why should we trust you, 瑟曦?\n\n瑟曦:[amused, with a hint of mockery](smirks, swirling a goblet of wine in her hand)Trust? How quaint. I didn’t come here for trust, 珊莎. I came here because survival makes strange allies.\n\n艾莉亚:[cold and unblinking](leans against the wall, her hand resting on the hilt of her dagger)Strange allies have a habit of stabbing you in the back when you least expect it. \n\n瑟曦:[sharp, but controlled](raises an eyebrow)And little wolves have a habit of biting off more than they can chew.\n\n提利昂:[sardonically amused](sits with his legs crossed, sipping wine)Now, now, let’s not make this meeting more unbearable than it already is. 瑟曦, you’re here because you need us. The least you can do is pretend to be civil.\n\n瑟曦:[grudgingly](sets down her goblet with a soft clang)Fine. Pretend, then. Let’s talk about the real threat. The dead march south, and we all know who’s to blame for this mess. (glances pointedly at 丹妮莉丝)\n\n丹妮莉丝:[furious, but holding back](stands tall, her voice icy)If you’re implying this is somehow my fault, 瑟曦, then you’re even more delusional than I thought. I’ve sacrificed everything to fight this war.\n\n詹姆:[weary, but firm](steps forward, placing himself slightly between 瑟曦 and 丹妮莉丝)Enough. We don’t have time for this. The Night King doesn’t care about your grudges or your crowns. He’s coming for all of us.\n\n雪诺:[earnest and resolute](leans forward, his voice steady)詹姆 is right. We can’t afford to fight amongst ourselves. If we don’t stand together, we’ll fall—one by one.\n\n布兰:[detached, almost otherworldly](stares into the fire, his voice quiet but commanding)The Night King is closer than you think. He knows we’re here. He’s seen us. [He always sees.]\n\n珊莎:[tense, but thoughtful](glances at 布兰, then back to the others)If that’s true, we need a strategy. A real one. Not just words and empty promises.\n\n提利昂:[calculating](leans forward, his fingers steepled)Then let’s start with resources. We need to know what each of us can bring to the fight. 瑟曦, do you still have the Golden Company?\n\n瑟曦:[smirking, but evasive](tilts her head slightly)The Golden Company is loyal to the one who pays them. That loyalty, as it happens, belongs to me. For now.\n\n艾莉亚:[dangerously quiet](steps forward, her eyes narrowing)And when the dead come for you, do you think your gold will save you?\n\n瑟曦:[mocking, but with a hint of steel](meets 艾莉亚’s gaze without flinching)Perhaps not. But I’ve survived worse odds than you can imagine, little girl.\n\n丹妮莉丝:[assertive, with a quiet intensity](takes a step closer to 瑟曦)Enough of your games. Will you fight with us, or won’t you?\n\n瑟曦:[pausing, calculating](smiles thinly)I’ll fight… for myself. If that happens to benefit you, consider it a bonus.\n\n珊莎:[disgusted, but measured](turns to the others)We can’t rely on her. We’ll plan as if she’s already betrayed us.\n\n提利昂:[grim, but resigned](nods slowly)Wise, as always. 瑟曦’s loyalty is as fleeting as the seasons.\n\n詹姆:[quietly, almost to himself](looks down)Not all Lannisters are the same.\n\n布兰:[cryptic, his gaze distant](looks directly at 詹姆)No, they’re not. [But some choices can never be undone.]\n\n雪诺:[focused, determined](stands)We need to act now. The longer we wait, the stronger the Night King becomes. Are we agreed?\n\n丹妮莉丝:[resolute, her voice steady](places her hand on the table)Agreed.\n\n珊莎:[reluctantly, but with authority](nods)Agreed.\n\n提利昂:[wryly, raising his goblet slightly](smirks)Well, it’s not the worst plan I’ve ever been a part of.\n\n瑟曦:[smiling faintly, her eyes cold](picks up her goblet)Just remember: when the time comes, don’t expect mercy. From anyone.\n\n艾莉亚:[deadly calm](draws her dagger, examining the blade)Mercy is for the weak. \n\n布兰:[softly, but with an edge of finality](looks at each of them in turn)The time for mercy has passed.\n\n(They all fall silent, the weight of their shared fate settling over the room as the fire crackles softly in the background.)\n\n---\n\n```  ",
+  "naive_multi": "瑟曦:[冷笑着，眼神中透着一丝轻蔑](轻抚着手中的酒杯)你们史塔克的人，总是以为荣誉能让你们活下去，可这世道，活下来的从来不是最正直的那群人。\n珊莎:[抬起下巴，目光坚定却带着一丝寒意](缓缓靠近瑟曦)荣誉或许不能让人活下去，但没有荣誉，活着又有什么意义？\n瑟曦:[嘴角微微上扬，目光如刀般刺向珊莎](缓缓起身，靠近她一步)意义？亲爱的，在这个游戏里，意义从来都是由赢家来定义的。\n珊莎:[眼中闪过一丝愤怒，声音低沉却坚定](直视瑟曦)那就让我们看看，赢家的定义能否逃过时间的审判。\n瑟曦:[轻哼一声，目光如鹰般锐利](低声说道)时间的审判？小狼，你还没见过真正的寒冬。\n艾莉亚:[嘴角微微扬起，目光如猎鹰般锐利](缓缓从阴影中走出)真正的寒冬？瑟曦，那你可曾见过死神的脸？\n丹妮莉丝:[目光炽热如火，声音低沉却充满威严](缓步走进，注视着瑟曦)赢家的定义？瑟曦，我的龙早已将灰烬中的王座重塑，你可愿试试它的温度？\n詹姆:[眉头微蹙，语气低沉却带着一丝讥讽](缓缓走到瑟曦身旁)看来这场盛宴，连死神和龙母都不请自来了。瑟曦，你确定你的棋盘还能撑得住吗？\n提利昂:[眼中闪过一丝戏谑，语气带着嘲讽却不失冷静](端起酒杯轻抿一口)哦，真是一场令人愉悦的聚会，寒冬、死神、还有龙的温度，听起来像是个好故事，只是缺了个聪明点的叙述者。\n雪诺:[目光沉稳却透着一丝忧虑](缓缓走入，站在珊莎身旁)如果赢家的定义是建立在鲜血和恐惧之上，那么这样的胜利，不过是另一场悲剧的开始。\n布兰:[目光深邃，语气平静却带着不可抗拒的力量](从阴影中注视众人)赢家的定义，或许并不重要，因为棋盘上的每一步，早已注定。\n提利昂:[眼中闪过一丝复杂的思索，语气轻描淡写却暗藏锋芒](放下酒杯，目光扫过众人)看来，这盘棋局的赢家，不只是由力量决定，还得看谁能笑到最后。\n艾莉亚:[目光冷峻，语气如冰刃般锋利](缓缓抽出匕首，直视瑟曦)赢家的定义或许不重要，但输家从来都知道自己的结局。\n艾莉亚:[目光如火般灼热，语气低沉却充满冷意](缓缓举起匕首，指向瑟曦)输家的结局，瑟曦，你会第一个知道。\n布兰:[目光穿透众人，语气平静却带着一丝警告](缓缓闭上眼睛)棋盘会崩塌，而你们所有的定义，终将化为尘埃。\n丹妮莉丝:[目光如炬，语气如钢般坚毅](缓缓迈步站在艾莉亚身旁)若棋盘注定崩塌，那就让火与血决定最后的命运。\n瑟曦:[目光冰冷，语气如毒蛇般阴毒](缓缓转向艾莉亚)死神的脸？小狼崽，别忘了，毒酒也能让猎人倒下。\n艾莉亚:[目光如刃，语气冰冷却充满决绝](缓缓逼近瑟曦)毒酒也许能杀死猎人，但它杀不死复仇者。\n提利昂:[眼中闪过一丝玩味，语气带着讽刺却透着冷静](看向瑟曦，微微一笑)复仇者、死神、火与血——听起来像一首不太和谐的乐章，瑟曦，你的毒酒恐怕连调子都赶不上。\n布兰:[目光如深渊般幽远，语气平静却带着一丝不可置疑的冷峻](缓缓睁开眼睛，注视瑟曦)毒酒也好，火与血也罢，瑟曦，你的结局，早已写在时间的长河里。\n",
+  "hollmwood": "瑟曦:[冷笑着，眼神中透着一丝轻蔑](轻抚着手中的酒杯)你们史塔克的人，总是以为荣誉能让你们活下去，可这世道，活下来的从来不是最正直的那群人。\n珊莎:[抬起下巴，目光坚定却带着一丝寒意](缓缓靠近瑟曦)荣誉或许不能让人活下去，但没有荣誉，活着又有什么意义？\n瑟曦:[嘴角微微上扬，目光如刀般刺向珊莎](缓缓起身，靠近她一步)意义？亲爱的，在这个游戏里，意义从来都是由赢家来定义的。\n珊莎:[眼中闪过一丝愤怒，声音低沉却坚定](直视瑟曦)那就让我们看看，赢家的定义能否逃过时间的审判。\n瑟曦:[轻哼一声，目光如鹰般锐利](低声说道)时间的审判？小狼，你还没见过真正的寒冬。\n艾莉亚:[嘴角微微扬起，目光如猎鹰般锐利](缓缓从阴影中走出)真正的寒冬？瑟曦，那你可曾见过死神的脸？\n丹妮莉丝:[目光炽热如火，声音低沉却充满威严](缓步走进，注视着瑟曦)赢家的定义？瑟曦，我的龙早已将灰烬中的王座重塑，你可愿试试它的温度？\n詹姆:[眉头微蹙，语气低沉却带着一丝讥讽](缓缓走到瑟曦身旁)看来这场盛宴，连死神和龙母都不请自来了。瑟曦，你确定你的棋盘还能撑得住吗？\n提利昂:[眼中闪过一丝戏谑，语气带着嘲讽却不失冷静](端起酒杯轻抿一口)哦，真是一场令人愉悦的聚会，寒冬、死神、还有龙的温度，听起来像是个好故事，只是缺了个聪明点的叙述者。\n雪诺:[目光沉稳却透着一丝忧虑](缓缓走入，站在珊莎身旁)如果赢家的定义是建立在鲜血和恐惧之上，那么这样的胜利，不过是另一场悲剧的开始。\n布兰:[目光深邃，语气平静却带着不可抗拒的力量](从阴影中注视众人)赢家的定义，或许并不重要，因为棋盘上的每一步，早已注定。\n提利昂:[眼中闪过一丝复杂的思索，语气轻描淡写却暗藏锋芒](放下酒杯，目光扫过众人)看来，这盘棋局的赢家，不只是由力量决定，还得看谁能笑到最后。\n艾莉亚:[目光冷峻，语气如冰刃般锋利](缓缓抽出匕首，直视瑟曦)赢家的定义或许不重要，但输家从来都知道自己的结局。\n艾莉亚:[目光如火般灼热，语气低沉却充满冷意](缓缓举起匕首，指向瑟曦)输家的结局，瑟曦，你会第一个知道。\n布兰:[目光穿透众人，语气平静却带着一丝警告](缓缓闭上眼睛)棋盘会崩塌，而你们所有的定义，终将化为尘埃。\n丹妮莉丝:[目光如炬，语气如钢般坚毅](缓缓迈步站在艾莉亚身旁)若棋盘注定崩塌，那就让火与血决定最后的命运。\n瑟曦:[目光冰冷，语气如毒蛇般阴毒](缓缓转向艾莉亚)死神的脸？小狼崽，别忘了，毒酒也能让猎人倒下。\n艾莉亚:[目光如刃，语气冰冷却充满决绝](缓缓逼近瑟曦)毒酒也许能杀死猎人，但它杀不死复仇者。\n提利昂:[眼中闪过一丝玩味，语气带着讽刺却透着冷静](看向瑟曦，微微一笑)复仇者、死神、火与血——听起来像一首不太和谐的乐章，瑟曦，你的毒酒恐怕连调子都赶不上。\n布兰:[目光如深渊般幽远，语气平静却带着一丝不可置疑的冷峻](缓缓睁开眼睛，注视瑟曦)毒酒也好，火与血也罢，瑟曦，你的结局，早已写在时间的长河里。\n"
+ },
+ "roles_info": {
+  "珊莎": {
+   "nickname": "珊莎",
+   "profile": "珊莎·史塔克是艾德·史塔克的长女，最初梦想成为王后，但在经历了许多磨难后，她逐渐成长为一个坚强的领袖。"
+  },
+  "瑟曦": {
+   "nickname": "瑟曦",
+   "profile": "瑟曦·兰尼斯特是兰尼斯特家族的长女，詹姆·兰尼斯特的双胞胎姐妹。她美丽、聪慧，但心狠手辣，为了权力不择手段。"
+  },
+  "艾莉亚": {
+   "nickname": "艾莉亚",
+   "profile": "艾莉亚·史塔克是艾德·史塔克的小女儿，勇敢、独立，擅长剑术。在家族遭遇不幸后，她开始了一段充满危险的流亡旅程。"
+  },
+  "丹妮莉丝": {
+   "nickname": "丹妮莉丝",
+   "profile": "丹妮莉丝·坦格利安是坦格利安家族的最后幸存者之一。她从流亡公主成长为强大的龙之母，誓要夺回铁王座。"
+  },
+  "詹姆": {
+   "nickname": "詹姆",
+   "profile": "詹姆·兰尼斯特是兰尼斯特家族的长子，外号“弑君者”。他身手矫健，性格复杂，最初因弑君而被世人厌恶，后逐渐展现了他更为人性的另一面。"
+  },
+  "提利昂": {
+   "nickname": "提利昂",
+   "profile": "提利昂·兰尼斯特是兰尼斯特家族的侏儒儿子，以机智与智慧闻名。他虽身材矮小，却有着高大的心灵与远大的抱负。"
+  },
+  "雪诺": {
+   "nickname": "雪诺",
+   "profile": "琼恩·雪诺是艾德·史塔克的私生子，成长于临冬城。他后来加入守夜人军团，最终成为其首领。他善良、正直、勇敢，是北境的希望。"
+  },
+  "布兰": {
+   "nickname": "布兰",
+   "profile": "布兰·史塔克是艾德·史塔克的幼子，在一次意外中失去双腿后，他逐渐发现自己拥有预知未来和操控人心的超自然能力。"
+  }
+ }
+}

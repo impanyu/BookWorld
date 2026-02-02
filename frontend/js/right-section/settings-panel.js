@@ -13,10 +13,9 @@ class SettingsPanel {
     }
 
     init() {
-        document.addEventListener('DOMContentLoaded', () => {
-            const container = document.querySelector('.settings-container');
+        const setup = () => {
+            const container = document.querySelector('.settings-content');
             if (!container) {
-                console.error('Profile Data not Found');
                 return;
             }
             
@@ -30,11 +29,17 @@ class SettingsPanel {
                     this.updateSettings(message.data.settings);
                 }
             });
-        });
+        };
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', setup);
+        } else {
+            setup();
+        }
     }
 
     updateSettings(settings) {
-        const container = document.querySelector('.settings-container');
+        const container = document.querySelector('.settings-content');
         if (container) {
             container.innerHTML = settings.map(setting => `
                 <div class="setting-item">
@@ -46,4 +51,6 @@ class SettingsPanel {
         }
     }
 }
-const settingsPanel = new SettingsPanel();
+
+// 移除全局初始化，交给 RightSection 处理
+window.SettingsPanel = SettingsPanel;

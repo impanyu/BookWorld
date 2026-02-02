@@ -117,10 +117,12 @@ class WorldAgent:
                           history_text: str, 
                           roles_info_text: str,
                           script: str = "",
-                          event:str = ""):
+                          event: str = "",
+                          last_actor_code: str = ""):
         prompt = self._DECIDE_NEXT_ACTOR_PROMPT.format(**{
             "roles_info":roles_info_text,
             "history_text":history_text,
+            "last_actor": last_actor_code if last_actor_code else "无"
         })
         
         max_tries = 3

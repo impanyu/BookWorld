@@ -39,18 +39,6 @@ class CharacterProfiles {
                 if (message.type === 'status_update' && message.data.characters) {
                     this.updateCharacters(message.data.characters);
                 }
-
-                window.addEventListener('websocket-message', (event) => {
-            const message = event.detail;
-            
-            if (message.type === 'status_update') {
-                this.updateAllStatus(message.data);
-            }
-            
-            if (message.type === 'initial_data' && message.data.status) {
-                this.updateAllStatus(message.data.status);
-            }
-        });
             });
 
             // 绑定点击事件

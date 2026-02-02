@@ -1,0 +1,422 @@
+{
+  "metadata": {
+    "start_time": "2026-02-01T19:39:52.841581",
+    "requested_rounds": 10,
+    "base_url": "http://localhost:8000",
+    "end_time": "2026-02-01T19:49:54.122495",
+    "total_messages": 274,
+    "scenes_completed": 8,
+    "simulation_ended_normally": false
+  },
+  "scenes": [
+    {
+      "current_scene": 1,
+      "save_dir": "",
+      "server": {
+        "short_term_file_size": 0
+      },
+      "agents": {
+        "SansaStark-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "CerseiLannister-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "AryaStark-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "DaenerysTargaryen-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "JaimeLannister-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "TyrionLannister-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "JonSnow-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "BranStark-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        }
+      },
+      "scene_number": 0,
+      "timestamp": "2026-02-01T19:41:09.841595"
+    },
+    {
+      "current_scene": 2,
+      "save_dir": "",
+      "server": {
+        "short_term_file_size": 0
+      },
+      "agents": {
+        "SansaStark-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "CerseiLannister-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "AryaStark-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "DaenerysTargaryen-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "JaimeLannister-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "TyrionLannister-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "JonSnow-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "BranStark-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        }
+      },
+      "scene_number": 1,
+      "timestamp": "2026-02-01T19:41:58.302400"
+    },
+    {
+      "current_scene": 3,
+      "save_dir": "",
+      "server": {
+        "short_term_file_size": 0
+      },
+      "agents": {
+        "SansaStark-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "CerseiLannister-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "AryaStark-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "DaenerysTargaryen-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "JaimeLannister-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "TyrionLannister-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "JonSnow-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "BranStark-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        }
+      },
+      "scene_number": 2,
+      "timestamp": "2026-02-01T19:42:56.199837"
+    },
+    {
+      "current_scene": 4,
+      "save_dir": "",
+      "server": {
+        "short_term_file_size": 0
+      },
+      "agents": {
+        "SansaStark-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "CerseiLannister-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "AryaStark-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "DaenerysTargaryen-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "JaimeLannister-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "TyrionLannister-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "JonSnow-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "BranStark-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        }
+      },
+      "scene_number": 3,
+      "timestamp": "2026-02-01T19:44:27.600547"
+    },
+    {
+      "current_scene": 5,
+      "save_dir": "",
+      "server": {
+        "short_term_file_size": 0
+      },
+      "agents": {
+        "SansaStark-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "CerseiLannister-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "AryaStark-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "DaenerysTargaryen-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "JaimeLannister-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "TyrionLannister-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "JonSnow-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "BranStark-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        }
+      },
+      "scene_number": 4,
+      "timestamp": "2026-02-01T19:45:49.843163"
+    },
+    {
+      "current_scene": 6,
+      "save_dir": "",
+      "server": {
+        "short_term_file_size": 0
+      },
+      "agents": {
+        "SansaStark-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "CerseiLannister-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "AryaStark-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "DaenerysTargaryen-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "JaimeLannister-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "TyrionLannister-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "JonSnow-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "BranStark-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        }
+      },
+      "scene_number": 5,
+      "timestamp": "2026-02-01T19:46:44.389832"
+    },
+    {
+      "current_scene": 7,
+      "save_dir": "",
+      "server": {
+        "short_term_file_size": 0
+      },
+      "agents": {
+        "SansaStark-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "CerseiLannister-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "AryaStark-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "DaenerysTargaryen-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "JaimeLannister-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "TyrionLannister-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "JonSnow-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "BranStark-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        }
+      },
+      "scene_number": 6,
+      "timestamp": "2026-02-01T19:47:32.666878"
+    },
+    {
+      "current_scene": 7,
+      "save_dir": "",
+      "server": {
+        "short_term_file_size": 0
+      },
+      "agents": {
+        "SansaStark-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "CerseiLannister-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "AryaStark-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "DaenerysTargaryen-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "JaimeLannister-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "TyrionLannister-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "JonSnow-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        },
+        "BranStark-zh": {
+          "short_term_file_size": 0,
+          "long_term_record_count": 0,
+          "long_term_db_size": 0
+        }
+      },
+      "scene_number": 7,
+      "timestamp": "2026-02-01T19:49:54.121687",
+      "is_final": true
+    }
+  ]
+}
