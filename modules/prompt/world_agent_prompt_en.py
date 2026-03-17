@@ -227,6 +227,58 @@ Please pay special attention to the following:
 - Only describe the current state without making decisions or actions on behalf of the characters.
 """
 
+CONSENSUS_EXTRACT_PROMPT = """You are summarizing shared knowledge from multiple characters' recent memories.
+
+## Recent memories from all characters:
+{all_new_memories}
+
+## Instructions:
+1. Extract the key shared facts, events, and common knowledge that multiple characters would all agree on.
+2. If there are contradictions between different characters' memories, do NOT include the contradictory information. Only extract what is consistent across characters (take the intersection of information).
+3. Each consensus item should be a concise, standalone factual statement.
+4. Focus on shared events, actions, and outcomes rather than individual thoughts or private perceptions.
+
+Return a JSON list of strings, each string being one consensus statement. Example:
+["Statement 1", "Statement 2", ...]
+
+Return ONLY the JSON list, parsable by json.loads().
+"""
+
+CONSENSUS_DEDUP_PROMPT = """You are checking whether a new consensus memory item is worth adding to the world's global memory.
+
+## New consensus item:
+{consensus_item}
+
+## Existing similar memories in world memory (top relevant items):
+{existing_memories}
+
+## Instructions:
+Compare the new consensus item against the existing memories above.
+
+1. If ALL information in the new item is ALREADY fully mentioned/covered by the existing memories, return: {{"action": "discard", "reason": "redundant"}}
+2. If the new item CONTRADICTS any of the existing memories, return: {{"action": "discard", "reason": "contradictory"}}
+3. If the new item contains novel, non-contradictory information not covered by existing memories, return: {{"action": "keep"}}
+
+Return ONLY valid JSON, parsable by json.loads(). Do not include ```json.
+"""
+
+CONSENSUS_FILTER_PROMPT = """You are filtering a character's memory against the finalized shared consensus.
+
+## Finalized consensus (shared knowledge added to world memory):
+{consensus}
+
+## Character's memory item:
+{memory}
+
+## Instructions:
+Determine whether this character's memory item is fully derivable from the consensus.
+
+1. If the consensus COMPLETELY covers this memory (the memory can be entirely deduced from the consensus, adding no unique information), return: {{"action": "remove"}}
+2. If the memory contains ANY information beyond what the consensus covers (unique perspectives, private thoughts, details not in the consensus), return: {{"action": "keep"}}
+
+Return ONLY valid JSON, parsable by json.loads(). Do not include ```json.
+"""
+
 LOG2STORY_PROMPT = """
 You are a skilled writer tasked with transforming action logs into an engaging novel-style narrative. Please use the following information to create an immersive story.
 

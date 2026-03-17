@@ -22,7 +22,9 @@ class Server():
                  preset_path: str,
                  world_llm_name: str,
                  role_llm_name: str,
-                 embedding_name:str = "bge-small") :
+                 embedding_name:str = "bge-small",
+                 memory_top_k: int = 5,
+                 consensus_threshold: int = 10) :
         """
         The initialization function of the system.
         
@@ -33,11 +35,15 @@ class Server():
             mode (str, optional): If set to be 'script', the role agents will act according to the given script. 
                                   If set to be 'free', the role agents will act freely based on their backround.
                                   Defaults to 'free'.
+            memory_top_k (int): Number of most similar memory items to retrieve. Defaults to 5.
+            consensus_threshold (int): Number of new records across all agents to trigger consensus. Defaults to 10.
         """
         
         self.role_llm_name: str = role_llm_name
         self.world_llm_name: str = world_llm_name
         self.embedding_name:str = embedding_name
+        self.memory_top_k: int = memory_top_k
+        self.consensus_threshold: int = consensus_threshold
         config = load_json_file(preset_path)
         self.preset_path = preset_path
         self.config: Dict = config
@@ -75,7 +81,8 @@ class Server():
                             role_file_dir = role_file_dir,
                             world_file_path=world_file_path,
                             llm = self.role_llm,
-                            embedding = self.embedding)
+                            embedding = self.embedding,
+                            memory_top_k = self.memory_top_k)
         
         if world_llm_name == role_llm_name:
             self.world_llm = self.role_llm
@@ -93,7 +100,8 @@ class Server():
                          role_file_dir:str, 
                          world_file_path:str,
                          llm=None,
-                         embedding=None) -> None:
+                         embedding=None,
+                         memory_top_k: int = 5) -> None:
         self.role_codes: List[str] = role_agent_codes
         self.role_agents: Dict[str, RPAgent] = {}
         
@@ -107,7 +115,8 @@ class Server():
                                                       llm_name = self.role_llm_name,
                                                       llm = llm,
                                                       embedding_name=self.embedding_name,
-                                                      embedding = embedding
+                                                      embedding = embedding,
+                                                      memory_top_k = memory_top_k
                                                       )
                 # print(f"{role_code} Initialized.")
             else:
@@ -723,6 +732,11 @@ class Server():
         self.history_manager.add_record(record)
         for code in group:
             self.role_agents[code].record(record)
+        
+        self.world_agent.check_and_run_consensus(
+            role_agents=self.role_agents,
+            consensus_threshold=self.consensus_threshold
+        )
     
     def settle_movement(self,):
         for role_code in self.moving_roles_info.copy():
@@ -792,32 +806,33 @@ class Server():
     def _name2code(self,roles):
         name_dic = {self.role_agents[code].role_name:code for code in self.role_codes}
         name_dic.update({self.role_agents[code].nickname:code for code in self.role_codes})
+
+        def _clean(text: str) -> str:
+            """Strip common LLM-added prefixes like 'role_code:' and whitespace."""
+            text = text.strip().replace("\n", "")
+            for prefix in ("role_code:", "role:", "code:", "actor:"):
+                if text.startswith(prefix):
+                    text = text[len(prefix):].strip()
+            return text
+
+        def _resolve_single(role: str) -> str:
+            role = _clean(role)
+            if role in self.role_codes:
+                return role
+            if role in name_dic:
+                return name_dic[role]
+            if f"{role}-{self.language}" in self.role_codes:
+                return f"{role}-{self.language}"
+            if "-" in role and role.split("-")[0] in name_dic:
+                return name_dic[role.split("-")[0]]
+            if role.replace("_", "·") in self.role_codes:
+                return role.replace("_", "·")
+            return role
+
         if isinstance(roles, list):
-            processed_roles = []
-            for role in roles:
-                if role in self.role_codes:
-                    processed_roles.append(role)
-                elif role in name_dic:
-                    processed_roles.append(name_dic[role])
-                elif "-" in role and role.split("-")[0] in name_dic:
-                    processed_roles.append(name_dic[role.split("-")[0]])
-                elif role.replace("_","·") in self.role_codes:
-                    processed_roles.append(role.replace("_","·"))
-                else:
-                    processed_roles.append(role)
-            return processed_roles
-        elif isinstance(roles, str) :
-            roles = roles.replace("\n","")
-            if roles in self.role_codes:
-                return roles
-            elif roles in name_dic:
-                return name_dic[roles]
-            elif f"{roles}-{self.language}" in self.role_codes:
-                return f"{roles}-{self.language}"
-            elif "-" in roles and roles.split("-")[0] in name_dic:
-                return name_dic[roles.split("-")[0]]
-            elif roles.replace("_","·") in self.role_codes:
-                return roles.replace("_","·")
+            return [_resolve_single(r) for r in roles]
+        elif isinstance(roles, str):
+            return _resolve_single(roles)
         return roles
     
     def log(self,text):
@@ -860,8 +875,12 @@ class Server():
         
         self.history_manager.save_to_file(save_dir)
         if hasattr(self, 'role_agents'):
+            create_dir(os.path.join(save_dir, "roles"))
             for role_code in self.role_codes:
                 self.role_agents[role_code].save_to_file(save_dir)
+                self.role_agents[role_code].history_manager.save_to_file(
+                    save_dir, f"roles/{role_code}_memory.json"
+                )
             self.world_agent.save_to_file(save_dir)
         
     def continue_simulation_from_file(self, save_dir: str):
@@ -881,14 +900,24 @@ class Server():
             self.__setstate__(states)
             self.world_agent.load_from_file(save_dir)
             self.history_manager.load_from_file(save_dir)
-            
-            for record in self.history_manager.detailed_history:
-                for code in record["group"]:
-                    if code in self.role_codes:
-                        self.role_agents[code].record(record)
-                        
+
             for role_code in self.role_codes:
-                self.role_agents[role_code].load_from_file(save_dir) 
+                memory_file = os.path.join(save_dir, f"roles/{role_code}_memory.json")
+                if os.path.exists(memory_file):
+                    self.role_agents[role_code].history_manager.load_from_file(
+                        save_dir, f"roles/{role_code}_memory.json"
+                    )
+                    self.role_agents[role_code].history_manager.set_embedding_fn(
+                        self.embedding
+                    )
+                else:
+                    for record in self.history_manager.detailed_history:
+                        for code in record.get("group", []):
+                            if code == role_code:
+                                self.role_agents[code].record(record)
+
+            for role_code in self.role_codes:
+                self.role_agents[role_code].load_from_file(save_dir)
         else:
             meta_info = {
                 "location_setted":False,
@@ -914,11 +943,15 @@ class BookWorld():
                  preset_path: str,
                  world_llm_name: str,
                  role_llm_name: str,
-                 embedding_name:str = "bge-m3") :
+                 embedding_name:str = "bge-m3",
+                 memory_top_k: int = 5,
+                 consensus_threshold: int = 10) :
         self.server = Server(preset_path, 
                         world_llm_name=world_llm_name, 
                         role_llm_name=role_llm_name, 
-                        embedding_name=embedding_name)
+                        embedding_name=embedding_name,
+                        memory_top_k=memory_top_k,
+                        consensus_threshold=consensus_threshold)
         self.selected_scene = None
         
     def set_generator(self, 

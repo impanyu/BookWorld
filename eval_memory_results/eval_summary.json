@@ -1,0 +1,77 @@
+{
+  "preset": "./experiment_presets/experiment_alice.json",
+  "llm": "gpt-4o-mini",
+  "rounds": 3,
+  "consensus_threshold": 10,
+  "role_codes": [
+    "Alice_Liddell-en",
+    "Cheshire_Cat-en",
+    "Hatter-en"
+  ],
+  "series": {
+    "rounds": [
+      1,
+      2,
+      3
+    ],
+    "with_consensus": {
+      "total": [
+        49,
+        71,
+        99
+      ],
+      "world": [
+        13,
+        17,
+        29
+      ],
+      "agents": {
+        "Alice_Liddell-en": [
+          12,
+          18,
+          23
+        ],
+        "Cheshire_Cat-en": [
+          12,
+          18,
+          24
+        ],
+        "Hatter-en": [
+          12,
+          18,
+          23
+        ]
+      }
+    },
+    "without_consensus": {
+      "total": [
+        39,
+        57,
+        85
+      ],
+      "world": [
+        0,
+        0,
+        0
+      ],
+      "agents": {
+        "Alice_Liddell-en": [
+          13,
+          19,
+          28
+        ],
+        "Cheshire_Cat-en": [
+          13,
+          19,
+          29
+        ],
+        "Hatter-en": [
+          13,
+          19,
+          28
+        ]
+      }
+    }
+  },
+  "timestamp": "2026-03-15T22:47:54.896182"
+}

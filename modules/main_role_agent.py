@@ -4,7 +4,6 @@ sys.path.append("../")
 import os
 from typing import Any, Dict, List, Optional, Literal
 from modules.embedding import get_embedding_model
-from modules.memory import build_role_agent_memory
 from modules.history_manager import HistoryManager
 from bw_utils import *
 import random
@@ -24,13 +23,14 @@ class RPAgent:
                  llm_name: str = "gpt-4o-mini",
                  llm = None,
                  embedding_name: str = "bge-small",
-                 embedding = None
+                 embedding = None,
+                 memory_top_k: int = 5
                  ):
         super(RPAgent, self).__init__()
         self.language: str  = language
         self.role_code: str = role_code
+        self.memory_top_k: int = memory_top_k
         
-        self.history_manager = HistoryManager()
         self.prompts: List[Dict] = []
         self.acted: bool = False
         self.status: str = ""
@@ -49,6 +49,9 @@ class RPAgent:
         
         if embedding is None:
             embedding = get_embedding_model(embedding_name, language=self.language)
+        self.embedding = embedding
+
+        self.history_manager = HistoryManager(embedding_fn=embedding)
         
         self.db_name = clean_collection_name(f"role_{role_code}_{embedding_name}")
         self.db = build_db(data = self.role_data,
@@ -57,13 +60,6 @@ class RPAgent:
                            embedding = embedding)
         self.world_db = None
         self.world_db_name = ""
-        self.memory = build_role_agent_memory(llm_name=llm_name,
-                                              embedding_name = embedding_name,
-                                              embedding = embedding,
-                                              db_name = self.db_name.replace("role","memory"),
-                                              language = self.language,
-                                              type="naive"
-                                              )
         
     def _init_prompt(self):
         if self.language == 'zh':
@@ -470,13 +466,19 @@ class RPAgent:
         references = "\n".join(self.db.search(query, top_k,self.db_name))
         return references
     
-    def retrieve_history(self, query: str, top_k: int = 5, retrieve: bool = False):
-        if len(self.history_manager) == 0: return ""
-        if len(self.history_manager) >= top_k and retrieve:
-            history = "\n" + "\n".join(self.memory.search(query, top_k)) + "\n"
-        else:
-            history = "\n" + "\n".join(self.history_manager.get_recent_history(top_k))
-        return history
+    def retrieve_history(self, query: str, top_k: int = None, retrieve: bool = True):
+        if len(self.history_manager) == 0: 
+            return ""
+        
+        if top_k is None:
+            top_k = self.memory_top_k
+        
+        if query and retrieve:
+            relevant = self.history_manager.retrieve_by_similarity(query, top_k)
+            if relevant:
+                return "\n" + "\n".join(relevant) + "\n"
+        
+        return "\n" + "\n".join(self.history_manager.get_recent_history(top_k)) + "\n"
         
     def get_other_roles_info_text(self, other_roles: List[str], if_relation: bool = True, if_profile: bool = True):
         roles_info_text = ""
@@ -510,8 +512,8 @@ class RPAgent:
             
     def __getstate__(self):
         states = {key: value for key, value in self.__dict__.items() \
-            if isinstance(value, (str, int, list, dict, bool, type(None))) \
-                and key not in ['role_info','role_data','llm','embedding','db',"memory"]
+            if isinstance(value, (str, int, list, dict, bool, float, type(None))) \
+                and key not in ['role_info','role_data','llm','embedding','db',"memory","world_db"]
                 and "PROMPT" not in key}
         return states
 
@@ -526,8 +528,7 @@ class RPAgent:
     def load_from_file(self, root_dir):
         filename = os.path.join(root_dir, f"./roles/{self.role_code}.json")
         states = load_json_file(filename)
-        self.__setstate__(states)     
-        self.memory.init_from_data(self.history_manager.get_complete_history())
+        self.__setstate__(states)
 
 def build_role_agent_data(role_dir: str):
     role_data: List[str] = []

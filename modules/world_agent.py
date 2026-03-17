@@ -4,6 +4,7 @@ import csv
 from typing import Any, Dict, List, Optional, Literal
 from bw_utils import *
 from modules.embedding import get_embedding_model
+from modules.history_manager import HistoryManager
 
 class WorldAgent:
     # Init
@@ -24,6 +25,7 @@ class WorldAgent:
         if embedding is None:
             embedding = get_embedding_model(embedding_name, language=language)
         self.llm = llm
+        self.embedding = embedding
         self.world_info: Dict[str, Any] = load_json_file(world_file_path)
         self.world_name: str = self.world_info["world_name"]
         self.language: str = language
@@ -33,8 +35,10 @@ class WorldAgent:
         self.locations_info: Dict[str, Any] = {}  
         self.locations: List[str] = []
         self.history: List[str] = []
-        self.edges: Dict[tuple, int] = {}  # 地点间距离
+        self.edges: Dict[tuple, int] = {}
         self.prompts: List[Dict] = []
+
+        self.memory = HistoryManager(embedding_fn=embedding)
         
         self.init_from_file(map_file_path = map_file_path,
                             location_file_path = location_file_path)
@@ -80,9 +84,27 @@ class WorldAgent:
                         
     def init_prompt(self,):
         if self.language == "zh":
-            from modules.prompt.world_agent_prompt_zh import ENVIROMENT_INTERACTION_PROMPT,NPC_INTERACTION_PROMPT,SCRIPT_INSTRUCTION_PROMPT,SCRIPT_ATTENTION_PROMPT,DECIDE_NEXT_ACTOR_PROMPT,GENERATE_INTERVENTION_PROMPT,UPDATE_EVENT_PROMPT,LOCATION_PROLOGUE_PROMPT,SELECT_SCREEN_ACTORS_PROMPT,JUDGE_IF_ENDED_PROMPT,LOG2STORY_PROMPT
+            from modules.prompt.world_agent_prompt_zh import (
+                ENVIROMENT_INTERACTION_PROMPT, NPC_INTERACTION_PROMPT,
+                SCRIPT_INSTRUCTION_PROMPT, SCRIPT_ATTENTION_PROMPT,
+                DECIDE_NEXT_ACTOR_PROMPT, GENERATE_INTERVENTION_PROMPT,
+                UPDATE_EVENT_PROMPT, LOCATION_PROLOGUE_PROMPT,
+                SELECT_SCREEN_ACTORS_PROMPT, JUDGE_IF_ENDED_PROMPT,
+                LOG2STORY_PROMPT,
+                CONSENSUS_EXTRACT_PROMPT, CONSENSUS_DEDUP_PROMPT,
+                CONSENSUS_FILTER_PROMPT,
+            )
         else:
-            from modules.prompt.world_agent_prompt_en import ENVIROMENT_INTERACTION_PROMPT,NPC_INTERACTION_PROMPT,SCRIPT_INSTRUCTION_PROMPT,SCRIPT_ATTENTION_PROMPT,DECIDE_NEXT_ACTOR_PROMPT,GENERATE_INTERVENTION_PROMPT,UPDATE_EVENT_PROMPT,LOCATION_PROLOGUE_PROMPT,SELECT_SCREEN_ACTORS_PROMPT,JUDGE_IF_ENDED_PROMPT,LOG2STORY_PROMPT
+            from modules.prompt.world_agent_prompt_en import (
+                ENVIROMENT_INTERACTION_PROMPT, NPC_INTERACTION_PROMPT,
+                SCRIPT_INSTRUCTION_PROMPT, SCRIPT_ATTENTION_PROMPT,
+                DECIDE_NEXT_ACTOR_PROMPT, GENERATE_INTERVENTION_PROMPT,
+                UPDATE_EVENT_PROMPT, LOCATION_PROLOGUE_PROMPT,
+                SELECT_SCREEN_ACTORS_PROMPT, JUDGE_IF_ENDED_PROMPT,
+                LOG2STORY_PROMPT,
+                CONSENSUS_EXTRACT_PROMPT, CONSENSUS_DEDUP_PROMPT,
+                CONSENSUS_FILTER_PROMPT,
+            )
             
         self._ENVIROMENT_INTERACTION_PROMPT = ENVIROMENT_INTERACTION_PROMPT
         self._NPC_INTERACTION_PROMPT = NPC_INTERACTION_PROMPT
@@ -95,6 +117,9 @@ class WorldAgent:
         self._SELECT_SCREEN_ACTORS_PROMPT = SELECT_SCREEN_ACTORS_PROMPT
         self._JUDGE_IF_ENDED_PROMPT = JUDGE_IF_ENDED_PROMPT
         self._LOG2STORY_PROMPT = LOG2STORY_PROMPT
+        self._CONSENSUS_EXTRACT_PROMPT = CONSENSUS_EXTRACT_PROMPT
+        self._CONSENSUS_DEDUP_PROMPT = CONSENSUS_DEDUP_PROMPT
+        self._CONSENSUS_FILTER_PROMPT = CONSENSUS_FILTER_PROMPT
         
     # Agent
     def update_event(self, 
@@ -294,7 +319,161 @@ class WorldAgent:
         response = self.llm.chat(prompt)
         return response
     
+    # ------------------------------------------------------------------
+    # Consensus mechanism
+    # ------------------------------------------------------------------
+
+    def check_and_run_consensus(self, role_agents: dict, consensus_threshold: int = 10):
+        """Run the full consensus pipeline when total unconsensused memories
+        across all role agents reach *consensus_threshold*.
+
+        Pipeline:
+          1. Collect all unconsensused items from every role agent.
+          2. LLM extracts consensus items (skip contradictions → intersection).
+          3. For each consensus item, deduplicate against world memory
+             (top-5 similar); keep only novel, non-contradictory items.
+          4. Add surviving consensus items to world memory → "final consensus".
+          5. For each role agent, filter their unconsensused items against
+             the final consensus: remove items fully covered by it.
+          6. Mark everything as consensused.
+
+        Returns:
+            list[str]: The final consensus items added to world memory, or [].
+        """
+        total_new = sum(
+            agent.history_manager.get_unconsensused_count()
+            for agent in role_agents.values()
+        )
+        if total_new < consensus_threshold:
+            return []
+
+        # Step 1 — gather unconsensused items
+        all_new_memories_text = ""
+        agent_unconsensused: Dict[str, list] = {}
+        for role_code, agent in role_agents.items():
+            items = agent.history_manager.get_unconsensused_items()
+            if items:
+                agent_unconsensused[role_code] = items
+                role_name = getattr(agent, "role_name", role_code)
+                mem_lines = "\n".join(f"- {it['detail']}" for it in items)
+                all_new_memories_text += f"\n### {role_name}:\n{mem_lines}\n"
+
+        if not all_new_memories_text.strip():
+            return []
+
+        # Step 2 — LLM extracts consensus (skip contradictions)
+        raw_consensus = self._extract_consensus(all_new_memories_text)
+        if not raw_consensus:
+            self._mark_all_agents_consensused(role_agents)
+            return []
+
+        # Step 3 — deduplicate each consensus item against world memory
+        final_consensus: List[str] = []
+        for item_text in raw_consensus:
+            if self._check_consensus_novelty(item_text):
+                self.memory.add_memory(item_text, {"source": "consensus"})
+                final_consensus.append(item_text)
+
+        if not final_consensus:
+            self._mark_all_agents_consensused(role_agents)
+            return []
+
+        # Step 4 — filter each role agent's unconsensused items
+        final_consensus_text = "\n".join(f"- {c}" for c in final_consensus)
+        for role_code, items in agent_unconsensused.items():
+            agent = role_agents[role_code]
+            self._filter_agent_memories(agent, items, final_consensus_text)
+
+        # Step 5 — mark everything as consensused
+        self._mark_all_agents_consensused(role_agents)
+
+        self.history.append(f"[Consensus] {final_consensus_text}")
+        return final_consensus
+
+    # ---- consensus sub-steps ----
+
+    def _extract_consensus(self, all_new_memories: str) -> list:
+        """LLM extracts consensus items from all agents' new memories."""
+        prompt = self._CONSENSUS_EXTRACT_PROMPT.format(
+            all_new_memories=all_new_memories
+        )
+        try:
+            response = self.llm.chat(prompt)
+            return self._parse_json_list(response)
+        except Exception as e:
+            print(f"Consensus extraction failed: {e}")
+            return []
+
+    @staticmethod
+    def _parse_json_list(text: str) -> list:
+        """Parse a JSON list from LLM output, tolerating markdown fences."""
+        import re, json as _json
+        text = text.strip()
+        text = re.sub(r"^```(?:json)?\s*", "", text)
+        text = re.sub(r"\s*```$", "", text)
+        text = text.strip()
+        match = re.search(r"\[.*\]", text, re.DOTALL)
+        if match:
+            try:
+                result = _json.loads(match.group())
+                if isinstance(result, list):
+                    return [str(item) for item in result if item]
+            except _json.JSONDecodeError:
+                pass
+        return []
+
+    def _check_consensus_novelty(self, consensus_item: str) -> bool:
+        """Return True if *consensus_item* should be added to world memory
+        (novel & non-contradictory vs. existing world memory)."""
+        if len(self.memory) == 0:
+            return True
+
+        similar = self.memory.retrieve_by_similarity(consensus_item, top_k=5)
+        if not similar:
+            return True
+
+        existing_context = "\n".join(f"- {s}" for s in similar)
+        prompt = self._CONSENSUS_DEDUP_PROMPT.format(
+            consensus_item=consensus_item,
+            existing_memories=existing_context,
+        )
+        try:
+            response = self.llm.chat(prompt)
+            result = json_parser(response)
+            return result.get("action", "keep") == "keep"
+        except Exception as e:
+            print(f"Consensus dedup check failed: {e}")
+            return True  # keep on error
+
+    def _filter_agent_memories(
+        self, agent, unconsensused_items: list, final_consensus_text: str
+    ):
+        """Remove agent memory items fully covered by the final consensus."""
+        for item_info in unconsensused_items:
+            memory_text = item_info["detail"]
+            idx = item_info["idx"]
+
+            prompt = self._CONSENSUS_FILTER_PROMPT.format(
+                consensus=final_consensus_text,
+                memory=memory_text,
+            )
+            try:
+                response = self.llm.chat(prompt)
+                result = json_parser(response)
+                if result.get("action", "keep") == "remove":
+                    agent.history_manager.remove_record(idx)
+            except Exception as e:
+                print(f"Consensus filter failed for record {idx}: {e}")
+
+    @staticmethod
+    def _mark_all_agents_consensused(role_agents: dict):
+        for agent in role_agents.values():
+            agent.history_manager.mark_all_consensused()
+
+    # ------------------------------------------------------------------
     # Other
+    # ------------------------------------------------------------------
+
     def record(self, detail: str, prompt: str = ""):
         if prompt:
             self.prompts.append({"prompt":prompt,
@@ -341,7 +520,8 @@ class WorldAgent:
     def __getstate__(self):
         state = {key: value for key, value in self.__dict__.items() 
                  if isinstance(value, (str, int, list, dict, float, bool, type(None)))
-                 and (key not in ['llm','embedding','db','locations_info','edges','world_data','world_settings']
+                 and (key not in ['llm','embedding','db','locations_info','edges',
+                                  'world_data','world_settings','memory']
                  and "PROMPT" not in key)
                  }
         return state
@@ -352,9 +532,12 @@ class WorldAgent:
     def save_to_file(self, root_dir):
         filename = os.path.join(root_dir, f"./world_agent.json")
         save_json_file(filename, self.__getstate__() )
+        self.memory.save_to_file(root_dir, "world_memory.json")
 
     def load_from_file(self, root_dir):
         filename = os.path.join(root_dir, f"./world_agent.json")
         state = load_json_file(filename)
-        self.__setstate__(state)  
-
+        self.__setstate__(state)
+        self.memory.load_from_file(root_dir, "world_memory.json")
+        if self.embedding:
+            self.memory.set_embedding_fn(self.embedding)
