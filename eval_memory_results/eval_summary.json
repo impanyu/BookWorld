@@ -8,70 +8,123 @@
     "Cheshire_Cat-en",
     "Hatter-en"
   ],
+  "methodology": "no_consensus & consensus from SAME run; gmemory from separate run",
   "series": {
     "rounds": [
       1,
       2,
       3
     ],
-    "with_consensus": {
+    "no_consensus": {
       "total": [
-        49,
-        71,
-        99
+        10872,
+        17241,
+        27067
       ],
-      "world": [
-        13,
-        17,
-        29
-      ],
-      "agents": {
-        "Alice_Liddell-en": [
-          12,
-          18,
-          23
-        ],
-        "Cheshire_Cat-en": [
-          12,
-          18,
-          24
-        ],
-        "Hatter-en": [
-          12,
-          18,
-          23
-        ]
-      }
-    },
-    "without_consensus": {
-      "total": [
-        39,
-        57,
-        85
-      ],
-      "world": [
+      "shared": [
         0,
         0,
         0
       ],
       "agents": {
         "Alice_Liddell-en": [
-          13,
-          19,
-          28
+          4073,
+          6196,
+          9656
         ],
         "Cheshire_Cat-en": [
-          13,
-          19,
-          29
+          3546,
+          5669,
+          8878
         ],
         "Hatter-en": [
-          13,
-          19,
-          28
+          3253,
+          5376,
+          8533
+        ]
+      }
+    },
+    "consensus": {
+      "total": [
+        11173,
+        18066,
+        28107
+      ],
+      "shared": [
+        1465,
+        1989,
+        3363
+      ],
+      "agents": {
+        "Alice_Liddell-en": [
+          3225,
+          5348,
+          8237
+        ],
+        "Cheshire_Cat-en": [
+          3230,
+          5353,
+          8242
+        ],
+        "Hatter-en": [
+          3253,
+          5376,
+          8265
+        ]
+      }
+    },
+    "gmemory": {
+      "total": [
+        7875,
+        15281,
+        21991
+      ],
+      "shared": [
+        1374,
+        2732,
+        4627
+      ],
+      "agents": {
+        "Alice_Liddell-en": [
+          2160,
+          4176,
+          5781
+        ],
+        "Cheshire_Cat-en": [
+          2189,
+          4205,
+          5810
+        ],
+        "Hatter-en": [
+          2152,
+          4168,
+          5773
         ]
       }
     }
   },
-  "timestamp": "2026-03-15T22:47:54.896182"
+  "quality_scores": {
+    "consensus": {
+      "Creativity": 6,
+      "Anthropomorphism": 6,
+      "Character Fidelity": 6,
+      "Writing Quality": 6,
+      "Immersion & Setting": 6
+    },
+    "no_consensus": {
+      "Creativity": 6,
+      "Anthropomorphism": 6,
+      "Character Fidelity": 6,
+      "Writing Quality": 6,
+      "Immersion & Setting": 6
+    },
+    "gmemory": {
+      "Creativity": 6,
+      "Anthropomorphism": 6,
+      "Character Fidelity": 6,
+      "Writing Quality": 6,
+      "Immersion & Setting": 6
+    }
+  },
+  "timestamp": "2026-04-14T23:13:52.452597"
 }

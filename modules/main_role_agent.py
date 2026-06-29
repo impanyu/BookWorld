@@ -60,6 +60,9 @@ class RPAgent:
                            embedding = embedding)
         self.world_db = None
         self.world_db_name = ""
+        self.world_memory: Optional['HistoryManager'] = None
+        self.gmemory: Optional[Any] = None  # GMemoryManager, set externally
+        self.lru_memory: Optional[Any] = None  # LRUChromaMemoryManager, set externally
         
     def _init_prompt(self):
         if self.language == 'zh':
@@ -467,18 +470,56 @@ class RPAgent:
         return references
     
     def retrieve_history(self, query: str, top_k: int = None, retrieve: bool = True):
-        if len(self.history_manager) == 0: 
-            return ""
-        
         if top_k is None:
             top_k = self.memory_top_k
-        
-        if query and retrieve:
-            relevant = self.history_manager.retrieve_by_similarity(query, top_k)
-            if relevant:
-                return "\n" + "\n".join(relevant) + "\n"
-        
-        return "\n" + "\n".join(self.history_manager.get_recent_history(top_k)) + "\n"
+
+        # LRU-cache + shared ChromaDB path fully replaces the flat history here.
+        if self.lru_memory is not None:
+            if query and retrieve:
+                return self.lru_memory.retrieve_for_role(self.role_code, query)
+            return self.lru_memory.current_cache_text(self.role_code)
+
+        own_items: List[str] = []
+        if len(self.history_manager) > 0:
+            if query and retrieve:
+                own_items = self.history_manager.retrieve_by_similarity(query, top_k) or []
+            if not own_items:
+                own_items = self.history_manager.get_recent_history(top_k)
+
+        # G-Memory path: use hierarchical memory instead of flat consensus
+        if self.gmemory is not None and query and retrieve:
+            gmem_text = self.gmemory.retrieve_for_role(
+                query, self.role_name, self.role_profile, top_k=top_k
+            )
+            if not own_items and not gmem_text:
+                return ""
+            parts: List[str] = []
+            if own_items:
+                label = "[个人记忆]" if self.language == "zh" else "[Personal Memory]"
+                parts.append(f"{label}\n" + "\n".join(own_items))
+            if gmem_text:
+                parts.append(gmem_text.strip())
+            return "\n" + "\n\n".join(parts) + "\n"
+
+        # Consensus-memory path: query world shared memory
+        world_items: List[str] = []
+        if self.world_memory is not None and len(self.world_memory) > 0 and query and retrieve:
+            world_items = self.world_memory.retrieve_by_similarity(query, top_k) or []
+
+        if not own_items and not world_items:
+            return ""
+
+        if self.language == "zh":
+            own_label, world_label = "[个人记忆]", "[共享共识记忆]"
+        else:
+            own_label, world_label = "[Personal Memory]", "[Shared Consensus Memory]"
+
+        parts: List[str] = []
+        if own_items:
+            parts.append(f"{own_label}\n" + "\n".join(own_items))
+        if world_items:
+            parts.append(f"{world_label}\n" + "\n".join(world_items))
+        return "\n" + "\n\n".join(parts) + "\n"
         
     def get_other_roles_info_text(self, other_roles: List[str], if_relation: bool = True, if_profile: bool = True):
         roles_info_text = ""

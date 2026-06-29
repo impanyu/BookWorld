@@ -21,6 +21,7 @@ class HistoryManager:
         self._embedding_fn = embedding_fn
         self._embeddings: List = []          # parallel cache of embedding vectors
         self._new_record_start_idx: int = 0  # backward-compat cursor
+        self._total_removed_bytes: int = 0   # tracks bytes cleared by consensus
 
     # ------------------------------------------------------------------
     # Embedding helpers
@@ -96,6 +97,11 @@ class HistoryManager:
         """Replace a record's detail and update cached embedding."""
         if not (0 <= idx < len(self.detailed_history)):
             return
+        old_detail = self.detailed_history[idx].get("detail", "")
+        old_bytes = len(old_detail.encode("utf-8")) if old_detail else 0
+        new_bytes = len(new_detail.encode("utf-8")) if new_detail else 0
+        if old_bytes > new_bytes:
+            self._total_removed_bytes += old_bytes - new_bytes
         self.detailed_history[idx]["detail"] = new_detail
         if idx < len(self._embeddings):
             if self._embedding_fn and new_detail:
@@ -110,6 +116,9 @@ class HistoryManager:
         """Mark a record as removed by clearing its detail and embedding."""
         if not (0 <= idx < len(self.detailed_history)):
             return
+        old_detail = self.detailed_history[idx].get("detail", "")
+        if old_detail:
+            self._total_removed_bytes += len(old_detail.encode("utf-8"))
         self.detailed_history[idx]["detail"] = ""
         if idx < len(self._embeddings):
             self._embeddings[idx] = None
@@ -261,6 +270,8 @@ class HistoryManager:
         self.__dict__.update(states)
         self._embedding_fn = None
         self._embeddings = []
+        if not hasattr(self, '_total_removed_bytes'):
+            self._total_removed_bytes = 0
 
     def save_to_file(self, root_dir, filename="simulation_history.json"):
         filepath = os.path.join(root_dir, filename)

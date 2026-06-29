@@ -1,0 +1,130 @@
+{
+  "preset": "./experiment_presets/experiment_alice.json",
+  "llm": "gpt-4o-mini",
+  "rounds": 3,
+  "consensus_threshold": 10,
+  "role_codes": [
+    "Alice_Liddell-en",
+    "Cheshire_Cat-en",
+    "Hatter-en"
+  ],
+  "methodology": "3 fully independent simulation runs",
+  "series": {
+    "rounds": [
+      1,
+      2,
+      3
+    ],
+    "no_consensus": {
+      "total": [
+        6178,
+        10840,
+        16867
+      ],
+      "shared": [
+        0,
+        0,
+        0
+      ],
+      "agents": {
+        "Alice_Liddell-en": [
+          2044,
+          3598,
+          5607
+        ],
+        "Cheshire_Cat-en": [
+          2066,
+          3620,
+          5629
+        ],
+        "Hatter-en": [
+          2068,
+          3622,
+          5631
+        ]
+      }
+    },
+    "consensus": {
+      "total": [
+        4289,
+        8558,
+        13357
+      ],
+      "shared": [
+        517,
+        2452,
+        2913
+      ],
+      "agents": {
+        "Alice_Liddell-en": [
+          1272,
+          2050,
+          3496
+        ],
+        "Cheshire_Cat-en": [
+          1248,
+          2026,
+          3472
+        ],
+        "Hatter-en": [
+          1252,
+          2030,
+          3476
+        ]
+      }
+    },
+    "gmemory": {
+      "total": [
+        8979,
+        17848,
+        26043
+      ],
+      "shared": [
+        1503,
+        2719,
+        4536
+      ],
+      "agents": {
+        "Alice_Liddell-en": [
+          2480,
+          5031,
+          7157
+        ],
+        "Cheshire_Cat-en": [
+          2493,
+          5044,
+          7170
+        ],
+        "Hatter-en": [
+          2503,
+          5054,
+          7180
+        ]
+      }
+    }
+  },
+  "quality_scores": {
+    "no_consensus": {
+      "Creativity": 6,
+      "Anthropomorphism": 6,
+      "Character Fidelity": 6,
+      "Writing Quality": 6,
+      "Immersion & Setting": 6
+    },
+    "consensus": {
+      "Creativity": 6,
+      "Anthropomorphism": 6,
+      "Character Fidelity": 6,
+      "Writing Quality": 6,
+      "Immersion & Setting": 6
+    },
+    "gmemory": {
+      "Creativity": 6,
+      "Anthropomorphism": 6,
+      "Character Fidelity": 6,
+      "Writing Quality": 6,
+      "Immersion & Setting": 6
+    }
+  },
+  "timestamp": "2026-04-18T20:48:53.665757"
+}

@@ -233,9 +233,12 @@ CONSENSUS_EXTRACT_PROMPT = """You are summarizing shared knowledge from multiple
 {all_new_memories}
 
 ## Instructions:
+First, carefully organize the events in chronological order and sort out the causal logic: identify what happened first, what happened next, and the cause-and-effect relationships between events. This ensures the consensus you produce is logically coherent and temporally accurate.
+
+Then, based on your analysis, extract consensus items following these rules:
 1. Extract the key shared facts, events, and common knowledge that multiple characters would all agree on.
 2. If there are contradictions between different characters' memories, do NOT include the contradictory information. Only extract what is consistent across characters (take the intersection of information).
-3. Each consensus item should be a concise, standalone factual statement.
+3. Each consensus item should be a concise, standalone factual statement that preserves the correct chronological and causal relationships.
 4. Focus on shared events, actions, and outcomes rather than individual thoughts or private perceptions.
 
 Return a JSON list of strings, each string being one consensus statement. Example:
@@ -262,19 +265,23 @@ Compare the new consensus item against the existing memories above.
 Return ONLY valid JSON, parsable by json.loads(). Do not include ```json.
 """
 
-CONSENSUS_FILTER_PROMPT = """You are filtering a character's memory against the finalized shared consensus.
+CONSENSUS_FILTER_PROMPT = """You are compressing a character's memory by removing information already captured in the shared consensus.
 
-## Finalized consensus (shared knowledge added to world memory):
+## Finalized consensus (shared knowledge already stored in world memory):
 {consensus}
 
 ## Character's memory item:
 {memory}
 
 ## Instructions:
-Determine whether this character's memory item is fully derivable from the consensus.
+Rewrite the character's memory to retain ONLY the information that is NOT already captured in the consensus above. Remove all redundant/shared parts and keep only what is unique to this character (personal observations, private thoughts, unique actions, specific dialogue not reflected in the consensus).
 
-1. If the consensus COMPLETELY covers this memory (the memory can be entirely deduced from the consensus, adding no unique information), return: {{"action": "remove"}}
-2. If the memory contains ANY information beyond what the consensus covers (unique perspectives, private thoughts, details not in the consensus), return: {{"action": "keep"}}
+Rules:
+1. If the memory is ENTIRELY covered by the consensus (no unique information remains), return: {{"action": "remove"}}
+2. If there IS unique information, return: {{"action": "compress", "compressed": "<rewritten memory containing ONLY the unique parts>"}}
+   - The compressed version must be significantly shorter than the original.
+   - Preserve the character's perspective and voice.
+   - Do NOT include any information that the consensus already covers.
 
 Return ONLY valid JSON, parsable by json.loads(). Do not include ```json.
 """

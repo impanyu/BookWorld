@@ -68,7 +68,8 @@ class ConnectionManager:
                     role_llm_name = config["role_llm_name"],
                     embedding_name = config["embedding_model_name"],
                     memory_top_k = config.get("memory_top_k", 5),
-                    consensus_threshold = config.get("consensus_threshold", 10))
+                    consensus_threshold = config.get("consensus_threshold", 10),
+                    memory_type = config.get("memory_type", "consensus"))
             self.bw.set_generator(rounds = config["rounds"], 
                         save_dir = config["save_dir"], 
                         if_save = config["if_save"],

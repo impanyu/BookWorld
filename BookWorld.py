@@ -24,7 +24,8 @@ class Server():
                  role_llm_name: str,
                  embedding_name:str = "bge-small",
                  memory_top_k: int = 5,
-                 consensus_threshold: int = 10) :
+                 consensus_threshold: int = 10,
+                 memory_type: str = "consensus") :
         """
         The initialization function of the system.
         
@@ -37,6 +38,7 @@ class Server():
                                   Defaults to 'free'.
             memory_top_k (int): Number of most similar memory items to retrieve. Defaults to 5.
             consensus_threshold (int): Number of new records across all agents to trigger consensus. Defaults to 10.
+            memory_type (str): "consensus" for our mechanism, "gmemory" for G-Memory baseline. Defaults to "consensus".
         """
         
         self.role_llm_name: str = role_llm_name
@@ -44,6 +46,7 @@ class Server():
         self.embedding_name:str = embedding_name
         self.memory_top_k: int = memory_top_k
         self.consensus_threshold: int = consensus_threshold
+        self.memory_type: str = memory_type
         config = load_json_file(preset_path)
         self.preset_path = preset_path
         self.config: Dict = config
@@ -139,7 +142,39 @@ class Server():
         for role_code in self.role_agents:
             self.role_agents[role_code].world_db = self.world_agent.db
             self.role_agents[role_code].world_db_name = self.world_agent.db_name
-        
+            if self.memory_type == "consensus":
+                self.role_agents[role_code].world_memory = self.world_agent.memory
+            else:
+                self.role_agents[role_code].world_memory = None
+
+        self.gmemory = None
+        if self.memory_type == "gmemory":
+            from modules.gmemory_manager import GMemoryManager
+            self.gmemory = GMemoryManager(
+                llm=self.world_llm if hasattr(self, 'world_llm') else llm,
+                embedding_fn=embedding,
+            )
+            for role_code in self.role_agents:
+                self.role_agents[role_code].gmemory = self.gmemory
+                self.role_agents[role_code].world_memory = None
+
+        self.lru_memory = None
+        if self.memory_type == "lru_chroma":
+            from modules.lru_chroma_memory import LRUChromaMemoryManager
+            self.lru_memory = LRUChromaMemoryManager(
+                llm=self.world_llm if hasattr(self, 'world_llm') else llm,
+                embedding_fn=embedding,
+                role_codes=list(self.role_agents.keys()),
+                consensus_threshold=self.consensus_threshold,
+                miss_retrieve_k=5,
+                cache_capacity=20,
+                consensus_top_k=5,
+                language=self.language,
+            )
+            for role_code in self.role_agents:
+                self.role_agents[role_code].lru_memory = self.lru_memory
+                self.role_agents[role_code].world_memory = None
+
     def init_role_locations(self, random_allocate: bool = True):
         """
         Set initial positions of the roles.
@@ -317,8 +352,20 @@ class Server():
                 self.role_agents[role_code].update_status()
                 
             self.settle_movement()
-            self.update_event(group)    
-                
+            self.update_event(group)
+
+            if self.memory_type == "gmemory" and self.gmemory is not None:
+                round_trajectory = "\n".join(
+                    self.history_manager.get_recent_history(
+                        len(self.history_manager) - start_idx
+                    )
+                )
+                self.gmemory.add_round_memory(
+                    event=self.event or "",
+                    trajectory=round_trajectory,
+                    round_num=current_round + 1,
+                )
+
             sub_start_round = 0 
             self._save_current_simulation("action", current_round + 1,sub_round + 1)
             
@@ -732,11 +779,17 @@ class Server():
         self.history_manager.add_record(record)
         for code in group:
             self.role_agents[code].record(record)
-        
-        self.world_agent.check_and_run_consensus(
-            role_agents=self.role_agents,
-            consensus_threshold=self.consensus_threshold
-        )
+
+        if self.memory_type == "consensus":
+            self.world_agent.check_and_run_consensus(
+                role_agents=self.role_agents,
+                consensus_threshold=self.consensus_threshold
+            )
+        elif self.memory_type == "lru_chroma" and self.lru_memory is not None and detail:
+            # Every in-scene role stores its own copy of the turn (owner = that role);
+            # the manager triggers the global consensus merge once the threshold is hit.
+            for code in group:
+                self.lru_memory.add_memory(code, detail)
     
     def settle_movement(self,):
         for role_code in self.moving_roles_info.copy():
@@ -806,13 +859,17 @@ class Server():
     def _name2code(self,roles):
         name_dic = {self.role_agents[code].role_name:code for code in self.role_codes}
         name_dic.update({self.role_agents[code].nickname:code for code in self.role_codes})
+        lower_code_map = {code.lower(): code for code in self.role_codes}
+        lower_name_map = {k.lower(): v for k, v in name_dic.items()}
 
         def _clean(text: str) -> str:
-            """Strip common LLM-added prefixes like 'role_code:' and whitespace."""
+            """Strip common LLM-added prefixes, quotes, and whitespace."""
             text = text.strip().replace("\n", "")
+            text = text.strip("\"'`""''「」『』")
             for prefix in ("role_code:", "role:", "code:", "actor:"):
-                if text.startswith(prefix):
+                if text.lower().startswith(prefix):
                     text = text[len(prefix):].strip()
+                    text = text.strip("\"'`""''「」『』")
             return text
 
         def _resolve_single(role: str) -> str:
@@ -821,10 +878,20 @@ class Server():
                 return role
             if role in name_dic:
                 return name_dic[role]
+            rl = role.lower()
+            if rl in lower_code_map:
+                return lower_code_map[rl]
+            if rl in lower_name_map:
+                return lower_name_map[rl]
             if f"{role}-{self.language}" in self.role_codes:
                 return f"{role}-{self.language}"
+            rl_lang = f"{rl}-{self.language}"
+            if rl_lang in lower_code_map:
+                return lower_code_map[rl_lang]
             if "-" in role and role.split("-")[0] in name_dic:
                 return name_dic[role.split("-")[0]]
+            if "-" in role and role.split("-")[0].lower() in lower_name_map:
+                return lower_name_map[role.split("-")[0].lower()]
             if role.replace("_", "·") in self.role_codes:
                 return role.replace("_", "·")
             return role
@@ -882,7 +949,11 @@ class Server():
                     save_dir, f"roles/{role_code}_memory.json"
                 )
             self.world_agent.save_to_file(save_dir)
-        
+        if hasattr(self, 'gmemory') and self.gmemory is not None:
+            self.gmemory.save_to_file(save_dir)
+        if hasattr(self, 'lru_memory') and self.lru_memory is not None:
+            self.lru_memory.save_to_file(save_dir)
+
     def continue_simulation_from_file(self, save_dir: str):
         """
         Restore the record of the last simulation.
@@ -918,6 +989,22 @@ class Server():
 
             for role_code in self.role_codes:
                 self.role_agents[role_code].load_from_file(save_dir)
+                if self.memory_type == "consensus":
+                    self.role_agents[role_code].world_memory = self.world_agent.memory
+                else:
+                    self.role_agents[role_code].world_memory = None
+
+            if hasattr(self, 'gmemory') and self.gmemory is not None:
+                self.gmemory.load_from_file(save_dir)
+                for role_code in self.role_codes:
+                    self.role_agents[role_code].gmemory = self.gmemory
+                    self.role_agents[role_code].world_memory = None
+
+            if hasattr(self, 'lru_memory') and self.lru_memory is not None:
+                self.lru_memory.load_from_file(save_dir)
+                for role_code in self.role_codes:
+                    self.role_agents[role_code].lru_memory = self.lru_memory
+                    self.role_agents[role_code].world_memory = None
         else:
             meta_info = {
                 "location_setted":False,
@@ -945,13 +1032,15 @@ class BookWorld():
                  role_llm_name: str,
                  embedding_name:str = "bge-m3",
                  memory_top_k: int = 5,
-                 consensus_threshold: int = 10) :
+                 consensus_threshold: int = 10,
+                 memory_type: str = "consensus") :
         self.server = Server(preset_path, 
                         world_llm_name=world_llm_name, 
                         role_llm_name=role_llm_name, 
                         embedding_name=embedding_name,
                         memory_top_k=memory_top_k,
-                        consensus_threshold=consensus_threshold)
+                        consensus_threshold=consensus_threshold,
+                        memory_type=memory_type)
         self.selected_scene = None
         
     def set_generator(self, 

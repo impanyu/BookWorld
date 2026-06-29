@@ -369,10 +369,16 @@ class WorldAgent:
 
         # Step 3 — deduplicate each consensus item against world memory
         final_consensus: List[str] = []
+        dedup_kept, dedup_dropped = 0, 0
         for item_text in raw_consensus:
             if self._check_consensus_novelty(item_text):
                 self.memory.add_memory(item_text, {"source": "consensus"})
                 final_consensus.append(item_text)
+                dedup_kept += 1
+            else:
+                dedup_dropped += 1
+        print(f"  [Consensus] Extracted {len(raw_consensus)} items, "
+              f"kept {dedup_kept}, dropped {dedup_dropped} (dedup/contradiction)")
 
         if not final_consensus:
             self._mark_all_agents_consensused(role_agents)
@@ -382,7 +388,10 @@ class WorldAgent:
         final_consensus_text = "\n".join(f"- {c}" for c in final_consensus)
         for role_code, items in agent_unconsensused.items():
             agent = role_agents[role_code]
-            self._filter_agent_memories(agent, items, final_consensus_text)
+            stats = self._filter_agent_memories(agent, items, final_consensus_text)
+            print(f"  [Consensus] {role_code}: {len(items)} unconsensused → "
+                  f"{stats['removed']} removed, {stats['compressed']} compressed, "
+                  f"{stats['kept']} kept, saved {stats['bytes_saved']}B")
 
         # Step 5 — mark everything as consensused
         self._mark_all_agents_consensused(role_agents)
@@ -447,11 +456,14 @@ class WorldAgent:
 
     def _filter_agent_memories(
         self, agent, unconsensused_items: list, final_consensus_text: str
-    ):
-        """Remove agent memory items fully covered by the final consensus."""
+    ) -> dict:
+        """Compress or remove agent memory items based on consensus overlap.
+        Returns stats: {"removed": int, "compressed": int, "kept": int, "bytes_saved": int}."""
+        stats = {"removed": 0, "compressed": 0, "kept": 0, "bytes_saved": 0}
         for item_info in unconsensused_items:
             memory_text = item_info["detail"]
             idx = item_info["idx"]
+            original_bytes = len(memory_text.encode("utf-8")) if memory_text else 0
 
             prompt = self._CONSENSUS_FILTER_PROMPT.format(
                 consensus=final_consensus_text,
@@ -460,10 +472,29 @@ class WorldAgent:
             try:
                 response = self.llm.chat(prompt)
                 result = json_parser(response)
-                if result.get("action", "keep") == "remove":
+                action = result.get("action", "keep")
+
+                if action == "remove":
                     agent.history_manager.remove_record(idx)
+                    stats["removed"] += 1
+                    stats["bytes_saved"] += original_bytes
+                elif action == "compress":
+                    compressed = result.get("compressed", "").strip()
+                    if compressed:
+                        compressed_bytes = len(compressed.encode("utf-8"))
+                        agent.history_manager.replace_record_detail(idx, compressed)
+                        stats["compressed"] += 1
+                        stats["bytes_saved"] += max(0, original_bytes - compressed_bytes)
+                    else:
+                        agent.history_manager.remove_record(idx)
+                        stats["removed"] += 1
+                        stats["bytes_saved"] += original_bytes
+                else:
+                    stats["kept"] += 1
             except Exception as e:
                 print(f"Consensus filter failed for record {idx}: {e}")
+                stats["kept"] += 1
+        return stats
 
     @staticmethod
     def _mark_all_agents_consensused(role_agents: dict):
