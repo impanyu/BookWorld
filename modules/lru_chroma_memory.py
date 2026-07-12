@@ -56,6 +56,20 @@ class RoleLRUCache:
         self._ids = list(ids)[: self.capacity]
 
 
+class RoleFIFOCache(RoleLRUCache):
+    """Per-role FIFO cache. Same id-only storage as RoleLRUCache, but a
+    re-inserted id keeps its arrival position (no refresh-on-access); only the
+    oldest arrival (tail) is evicted past capacity.
+    """
+
+    def insert(self, mem_id: str):
+        if mem_id in self._ids:
+            return  # FIFO: do not reorder on re-access
+        self._ids.insert(0, mem_id)
+        if len(self._ids) > self.capacity:
+            self._ids = self._ids[: self.capacity]
+
+
 def _owner_flag(role_code: str) -> str:
     return f"owner_{role_code}"
 
@@ -131,23 +145,31 @@ class SharedChromaStore:
         return self._collection.count()
 
     def all_entries(self) -> List[dict]:
-        """Export every entry as {id, text, owners} (owners as a sorted list)."""
-        res = self._collection.get(include=["documents", "metadatas"])
+        """Export every entry as {id, text, owners, embedding}."""
+        res = self._collection.get(include=["documents", "metadatas", "embeddings"])
         ids = res.get("ids") or []
         docs = res.get("documents") or []
         metas = res.get("metadatas") or []
+        embs = res.get("embeddings")
+        embs = embs if embs is not None else []
         out = []
         for i, mem_id in enumerate(ids):
             meta = metas[i] if i < len(metas) else {}
             owners = json.loads(meta.get("owners", "[]")) if meta else []
-            out.append({"id": mem_id, "text": docs[i], "owners": owners})
+            emb = embs[i] if i < len(embs) else None
+            entry = {"id": mem_id, "text": docs[i], "owners": owners}
+            if emb is not None:
+                entry["embedding"] = [float(x) for x in emb]
+            out.append(entry)
         return out
 
     def restore(self, entries: List[dict]):
-        """Re-import entries (preserving ids), recomputing embeddings."""
+        """Re-import entries (preserving ids); reuse stored embeddings, else recompute."""
         for e in entries:
             text, owners = e["text"], set(e.get("owners", []))
-            emb = self._embedding_fn([text])[0]
+            emb = e.get("embedding")
+            if emb is None:
+                emb = self._embedding_fn([text])[0]
             self._collection.add(
                 ids=[e["id"]], embeddings=[emb], documents=[text],
                 metadatas=[self._owner_metadata(owners)],
@@ -174,6 +196,151 @@ class SharedChromaStore:
         meta = {_owner_flag(o): True for o in owners}
         meta["owners"] = json.dumps(sorted(owners))
         return meta
+
+
+class KeywordSQLiteStore:
+    """A no-embedding global memory store backed by in-process SQLite.
+
+    Similarity = count of shared keywords (extracted via *keyword_fn*). Mirrors
+    SharedChromaStore's interface so consensus + the manager work unchanged.
+    """
+
+    def __init__(self, keyword_fn, db_path: str = ":memory:"):
+        import sqlite3
+
+        self._keyword_fn = keyword_fn
+        self._conn = sqlite3.connect(db_path)
+        c = self._conn
+        c.execute("CREATE TABLE memories (id TEXT PRIMARY KEY, text TEXT)")
+        c.execute("CREATE TABLE owners (mem_id TEXT, role TEXT)")
+        c.execute("CREATE TABLE keywords (mem_id TEXT, keyword TEXT)")
+        c.execute("CREATE INDEX idx_owners_role ON owners(role)")
+        c.execute("CREATE INDEX idx_owners_mem ON owners(mem_id)")
+        c.execute("CREATE INDEX idx_kw_keyword ON keywords(keyword)")
+        c.execute("CREATE INDEX idx_kw_mem ON keywords(mem_id)")
+        c.commit()
+
+    # ---- write ----
+
+    def add(self, text: str, owners: Set[str], mem_id: Optional[str] = None,
+            keywords: Optional[List[str]] = None) -> str:
+        mem_id = mem_id or str(uuid.uuid4())
+        kws = keywords if keywords is not None else self._keyword_fn(text)
+        c = self._conn
+        c.execute("INSERT INTO memories VALUES (?, ?)", (mem_id, text))
+        c.executemany("INSERT INTO owners VALUES (?, ?)",
+                      [(mem_id, o) for o in owners])
+        c.executemany("INSERT INTO keywords VALUES (?, ?)",
+                      [(mem_id, k) for k in kws])
+        c.commit()
+        return mem_id
+
+    def delete(self, mem_id: str):
+        c = self._conn
+        c.execute("DELETE FROM memories WHERE id = ?", (mem_id,))
+        c.execute("DELETE FROM owners WHERE mem_id = ?", (mem_id,))
+        c.execute("DELETE FROM keywords WHERE mem_id = ?", (mem_id,))
+        c.commit()
+
+    # ---- read ----
+
+    def get(self, mem_id: str) -> Optional[str]:
+        row = self._conn.execute(
+            "SELECT text FROM memories WHERE id = ?", (mem_id,)).fetchone()
+        return row[0] if row else None
+
+    def owners_of(self, mem_id: str) -> Set[str]:
+        rows = self._conn.execute(
+            "SELECT role FROM owners WHERE mem_id = ?", (mem_id,)).fetchall()
+        return {r[0] for r in rows}
+
+    def query(self, text: str, owner: str, top_k: int) -> List[Tuple[str, str]]:
+        return self._match(text, top_k, owner=owner, exclude_id=None)
+
+    def query_global(self, text: str, top_k: int,
+                     exclude_id: Optional[str] = None) -> List[Tuple[str, str]]:
+        return self._match(text, top_k, owner=None, exclude_id=exclude_id)
+
+    def count(self) -> int:
+        return self._conn.execute("SELECT COUNT(*) FROM memories").fetchone()[0]
+
+    def all_entries(self) -> List[dict]:
+        out = []
+        for mem_id, text in self._conn.execute(
+                "SELECT id, text FROM memories").fetchall():
+            kws = [r[0] for r in self._conn.execute(
+                "SELECT keyword FROM keywords WHERE mem_id = ?", (mem_id,))]
+            out.append({"id": mem_id, "text": text,
+                        "owners": sorted(self.owners_of(mem_id)),
+                        "keywords": kws})
+        return out
+
+    def restore(self, entries: List[dict]):
+        for e in entries:
+            self.add(e["text"], set(e.get("owners", [])),
+                     mem_id=e["id"], keywords=e.get("keywords"))
+
+    # ---- internal ----
+
+    def _match(self, text: str, top_k: int, owner: Optional[str],
+               exclude_id: Optional[str]) -> List[Tuple[str, str]]:
+        if top_k < 1:
+            return []
+        kws = self._keyword_fn(text)
+        if not kws:
+            return []
+        placeholders = ",".join("?" for _ in kws)
+        owner_join = "JOIN owners o ON o.mem_id = k.mem_id" if owner else ""
+        owner_where = "AND o.role = ?" if owner else ""
+        exclude_where = "AND k.mem_id != ?" if exclude_id else ""
+        sql = (
+            "SELECT m.id, m.text, COUNT(DISTINCT k.keyword) AS score "
+            "FROM keywords k JOIN memories m ON m.id = k.mem_id "
+            f"{owner_join} "
+            f"WHERE k.keyword IN ({placeholders}) {owner_where} {exclude_where} "
+            "GROUP BY m.id ORDER BY score DESC, m.rowid ASC LIMIT ?"
+        )
+        params = list(kws)
+        if owner:
+            params.append(owner)
+        if exclude_id:
+            params.append(exclude_id)
+        params.append(top_k)
+        rows = self._conn.execute(sql, params).fetchall()
+        return [(r[0], r[1]) for r in rows]
+
+
+KEYWORD_PROMPT = """Extract up to {k} short, representative keywords from the text \
+below (single words or very short phrases). Cover the key entities, actions, and topics.
+
+## Text:
+{text}
+
+Return ONLY a JSON array of strings parsable by json.loads(). No code fences.
+"""
+
+
+def make_llm_keyword_fn(llm, top_k: int = 5):
+    """Build a keyword_fn(text)->list[str] backed by the LLM."""
+
+    def keyword_fn(text: str) -> List[str]:
+        if not text or not text.strip():
+            return []
+        prompt = KEYWORD_PROMPT.format(k=top_k, text=text)
+        try:
+            response = llm.chat(prompt)
+        except Exception:
+            return []
+        parsed = _parse_json_list(response) or []
+        out, seen = [], set()
+        for kw in parsed:
+            norm = kw.strip().lower()
+            if norm and norm not in seen:
+                seen.add(norm)
+                out.append(norm)
+        return out[:top_k]
+
+    return keyword_fn
 
 
 JUDGE_SUFFICIENT_PROMPT = """You are deciding whether a character's cached memories are \
@@ -244,20 +411,42 @@ class LRUChromaMemoryManager:
                  persist_dir: Optional[str] = None,
                  cache_capacity: int = 20, miss_retrieve_k: int = 5,
                  consensus_top_k: int = 5, consensus_threshold: int = 10,
-                 language: str = "zh"):
+                 language: str = "zh", consensus_enabled: bool = True,
+                 cache_strategy: str = "lru", index_backend: str = "chroma",
+                 keyword_top_k: int = 5):
         self.llm = llm
-        self.store = SharedChromaStore(embedding_fn, collection_name, persist_dir)
+        self.index_backend = index_backend
+        if index_backend == "keyword":
+            self.keyword_fn = make_llm_keyword_fn(llm, keyword_top_k)
+            self.store = KeywordSQLiteStore(self.keyword_fn)
+        else:
+            self.keyword_fn = None
+            self.store = SharedChromaStore(embedding_fn, collection_name,
+                                           persist_dir)
         self.cache_capacity = cache_capacity
         self.miss_retrieve_k = miss_retrieve_k
         self.consensus_top_k = consensus_top_k
         self.consensus_threshold = consensus_threshold
+        self.consensus_enabled = consensus_enabled
         self.language = language
-        self._caches = {rc: RoleLRUCache(cache_capacity) for rc in role_codes}
+        self.cache_strategy = cache_strategy
+        self.cache_enabled = cache_strategy != "none"
+        cache_cls = RoleFIFOCache if cache_strategy == "fifo" else RoleLRUCache
+        self._cache_cls = cache_cls
+        self._caches = (
+            {rc: cache_cls(cache_capacity) for rc in role_codes}
+            if self.cache_enabled else {}
+        )
         self._pending: List[str] = []
 
     # ---- read ----
 
     def retrieve_for_role(self, role_code: str, query: str) -> str:
+        if not self.cache_enabled:
+            hits = self.store.query(query, owner=role_code,
+                                    top_k=self.miss_retrieve_k)
+            return self._format([t for _, t in hits])
+
         cache = self._cache_for(role_code)
 
         cached_texts = [t for t in (self.store.get(i) for i in cache.ids())
@@ -278,10 +467,12 @@ class LRUChromaMemoryManager:
 
     def add_memory(self, role_code: str, text: str) -> str:
         mem_id = self.store.add(text, owners={role_code})
-        self._cache_for(role_code).insert(mem_id)
-        self._pending.append(mem_id)
-        if len(self._pending) >= self.consensus_threshold:
-            self.run_consensus()
+        if self.cache_enabled:
+            self._cache_for(role_code).insert(mem_id)
+        if self.consensus_enabled:
+            self._pending.append(mem_id)
+            if len(self._pending) >= self.consensus_threshold:
+                self.run_consensus()
         return mem_id
 
     # ---- consensus ----
@@ -291,6 +482,8 @@ class LRUChromaMemoryManager:
 
         Consensus/residual entries are never re-enqueued, so this terminates.
         """
+        if not self.consensus_enabled:
+            return
         queue = self._pending
         self._pending = []
         for mem_id in queue:
@@ -333,7 +526,14 @@ class LRUChromaMemoryManager:
         for o in input_owners:
             union |= o
 
-        self.store.add(consensus, owners=union)  # consensus entry (not cached)
+        consensus_id = self.store.add(consensus, owners=union)  # consensus entry
+
+        # Caches that held any of the merged inputs are the ones whose old
+        # entries get superseded: repoint each old id to its residual (or drop
+        # it when the residual is empty), then LRU-insert the consensus id so
+        # the old entries are replaced by the consensus + residual entries.
+        touched = [cache for cache in self._caches.values()
+                   if any(cache.contains(iid) for iid in input_ids)]
         for k, iid in enumerate(input_ids):
             resid = residuals[k].strip()
             new_id = self.store.add(resid, owners=input_owners[k]) if resid else None
@@ -343,6 +543,8 @@ class LRUChromaMemoryManager:
                     cache.replace(iid, new_id)
                 else:
                     cache.remove(iid)
+        for cache in touched:
+            cache.insert(consensus_id)
 
     def _consensus_llm(self, inputs: List[str]) -> Optional[list]:
         listing = "\n".join(f"[{i}] {t}" for i, t in enumerate(inputs))
@@ -363,17 +565,21 @@ class LRUChromaMemoryManager:
         return len(self._pending)
 
     def cache_ids(self, role_code: str) -> List[str]:
+        if not self.cache_enabled:
+            return []
         return self._cache_for(role_code).ids()
 
     def current_cache_text(self, role_code: str) -> str:
         """Format the role's current cache contents without a judge or store query."""
+        if not self.cache_enabled:
+            return ""
         texts = [t for t in (self.store.get(i)
                              for i in self._cache_for(role_code).ids()) if t]
         return self._format(texts)
 
     def _cache_for(self, role_code: str) -> RoleLRUCache:
         if role_code not in self._caches:
-            self._caches[role_code] = RoleLRUCache(self.cache_capacity)
+            self._caches[role_code] = self._cache_cls(self.cache_capacity)
         return self._caches[role_code]
 
     def _judge_sufficient(self, cached_texts: List[str], query: str) -> bool:

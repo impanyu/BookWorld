@@ -64,9 +64,12 @@ def test_full_coverage_merges_into_single_consensus():
     entries = _all(m)
     assert list(entries) == ["The king died in spring."]
     assert entries["The king died in spring."] == {"alice", "bob"}
-    # both originals' cache slots removed (fully covered)
-    assert m.cache_ids("alice") == []
-    assert m.cache_ids("bob") == []
+    # both originals fully covered (empty residuals): their cache slots are
+    # dropped, but the consensus entry is LRU-inserted into both caches.
+    assert m.store.get(m.cache_ids("alice")[0]) == "The king died in spring."
+    assert m.store.get(m.cache_ids("bob")[0]) == "The king died in spring."
+    assert len(m.cache_ids("alice")) == 1
+    assert len(m.cache_ids("bob")) == 1
 
 
 def test_partial_coverage_keeps_residuals_with_original_owners():
@@ -80,11 +83,14 @@ def test_partial_coverage_keeps_residuals_with_original_owners():
     assert entries["crops failed"] == {"alice"}
     assert entries["comet appeared"] == {"bob"}
 
-    # caches repoint from the deleted originals to the residuals
-    alice_text = m.store.get(m.cache_ids("alice")[0])
-    bob_text = m.store.get(m.cache_ids("bob")[0])
-    assert alice_text == "crops failed"
-    assert bob_text == "comet appeared"
+    # caches: consensus LRU-inserted at the front (MRU), with each original's
+    # slot repointed to its residual behind it.
+    alice_ids = m.cache_ids("alice")
+    bob_ids = m.cache_ids("bob")
+    assert m.store.get(alice_ids[0]) == "The king died in spring."
+    assert m.store.get(alice_ids[1]) == "crops failed"
+    assert m.store.get(bob_ids[0]) == "The king died in spring."
+    assert m.store.get(bob_ids[1]) == "comet appeared"
 
 
 def test_picks_n_with_minimum_total_chars():

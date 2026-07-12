@@ -69,7 +69,10 @@ class ConnectionManager:
                     embedding_name = config["embedding_model_name"],
                     memory_top_k = config.get("memory_top_k", 5),
                     consensus_threshold = config.get("consensus_threshold", 10),
-                    memory_type = config.get("memory_type", "consensus"))
+                    memory_type = config.get("memory_type", "consensus"),
+                    consensus_enabled = config.get("consensus_enabled", True),
+                    cache_strategy = config.get("cache_strategy", "lru"),
+                    index_backend = config.get("index_backend", "chroma"))
             self.bw.set_generator(rounds = config["rounds"], 
                         save_dir = config["save_dir"], 
                         if_save = config["if_save"],

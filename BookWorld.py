@@ -1,7 +1,8 @@
 from datetime import datetime
 from tqdm import tqdm 
-import json 
+import json
 import os
+import copy
 import warnings
 import random
 from typing import Any, Dict, List, Optional, Literal
@@ -25,7 +26,10 @@ class Server():
                  embedding_name:str = "bge-small",
                  memory_top_k: int = 5,
                  consensus_threshold: int = 10,
-                 memory_type: str = "consensus") :
+                 memory_type: str = "consensus",
+                 consensus_enabled: bool = True,
+                 cache_strategy: str = "lru",
+                 index_backend: str = "chroma") :
         """
         The initialization function of the system.
         
@@ -47,6 +51,9 @@ class Server():
         self.memory_top_k: int = memory_top_k
         self.consensus_threshold: int = consensus_threshold
         self.memory_type: str = memory_type
+        self.consensus_enabled: bool = consensus_enabled
+        self.cache_strategy: str = cache_strategy
+        self.index_backend: str = index_backend
         config = load_json_file(preset_path)
         self.preset_path = preset_path
         self.config: Dict = config
@@ -170,6 +177,9 @@ class Server():
                 cache_capacity=20,
                 consensus_top_k=5,
                 language=self.language,
+                consensus_enabled=self.consensus_enabled,
+                cache_strategy=self.cache_strategy,
+                index_backend=self.index_backend,
             )
             for role_code in self.role_agents:
                 self.role_agents[role_code].lru_memory = self.lru_memory
@@ -776,7 +786,10 @@ class Server():
             "other_info":other_info,
             "record_id":record_id
         }
-        self.history_manager.add_record(record)
+        # Global log keeps an INDEPENDENT copy so per-role consensus compression
+        # (which empties/replaces detail in the shared role records) cannot mutate
+        # the global complete-history used for the quality-eval transcript.
+        self.history_manager.add_record(copy.deepcopy(record))
         for code in group:
             self.role_agents[code].record(record)
 
@@ -1033,14 +1046,20 @@ class BookWorld():
                  embedding_name:str = "bge-m3",
                  memory_top_k: int = 5,
                  consensus_threshold: int = 10,
-                 memory_type: str = "consensus") :
-        self.server = Server(preset_path, 
-                        world_llm_name=world_llm_name, 
-                        role_llm_name=role_llm_name, 
+                 memory_type: str = "consensus",
+                 consensus_enabled: bool = True,
+                 cache_strategy: str = "lru",
+                 index_backend: str = "chroma") :
+        self.server = Server(preset_path,
+                        world_llm_name=world_llm_name,
+                        role_llm_name=role_llm_name,
                         embedding_name=embedding_name,
                         memory_top_k=memory_top_k,
                         consensus_threshold=consensus_threshold,
-                        memory_type=memory_type)
+                        memory_type=memory_type,
+                        consensus_enabled=consensus_enabled,
+                        cache_strategy=cache_strategy,
+                        index_backend=index_backend)
         self.selected_scene = None
         
     def set_generator(self, 
