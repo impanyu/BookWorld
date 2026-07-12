@@ -48,6 +48,26 @@ def take_snapshot(server, round_num, memory_type):
     """Unified snapshot for any memory type."""
     snap = {"round": round_num}
 
+    # lru_chroma keeps its real memory in the shared store (the per-role
+    # history_manager is just the raw uncompressed log), so measure the
+    # footprint from the store: sole-owner entries count toward that role,
+    # consensus-merged (multi-owner) entries count as shared.
+    if memory_type == "lru_chroma" and getattr(server, "lru_memory", None) is not None:
+        per_role = {c: 0 for c in server.role_codes}
+        shared = 0
+        for e in server.lru_memory.store.all_entries():
+            b = _text_bytes(e.get("text", ""))
+            owners = e.get("owners", []) or []
+            if len(owners) >= 2:
+                shared += b
+            elif len(owners) == 1 and owners[0] in per_role:
+                per_role[owners[0]] += b
+        for c in server.role_codes:
+            snap[f"{c}_bytes"] = per_role.get(c, 0)
+        snap["shared_bytes"] = shared
+        snap["total_bytes"] = sum(per_role.values()) + shared
+        return snap
+
     for code in server.role_codes:
         hm = server.role_agents[code].history_manager
         snap[f"{code}_bytes"] = memory_bytes_active(hm)
@@ -150,6 +170,18 @@ def dump_round_log(server, round_0idx, memory_type, log_dir):
                     f.write(f"  [{ins.get('score', 0)}] {ins.get('rule', '')}\n")
             else:
                 f.write("(gmemory is None)\n")
+        elif memory_type == "lru_chroma" and getattr(server, "lru_memory", None) is not None:
+            entries = server.lru_memory.store.all_entries()
+            shared = [e for e in entries if len(e.get("owners", []) or []) >= 2]
+            f.write(f"=== LRU+Chroma Store after Round {round_1idx} ===\n")
+            f.write(f"=== Store entries: {len(entries)}, "
+                    f"multi-owner (consensus-merged / shared): {len(shared)}, "
+                    f"pending consensus: {server.lru_memory.pending_count()} ===\n\n")
+            for i, e in enumerate(shared):
+                owners = ", ".join(e.get("owners", []))
+                f.write(f"--- shared {i} (owners: {owners}) ---\n{e.get('text', '')}\n\n")
+            if not shared:
+                f.write("(no consensus-merged multi-owner entries yet)\n")
         else:
             f.write(f"=== No shared memory for mechanism '{memory_type}' ===\n")
 
@@ -185,8 +217,22 @@ def benchmark_retrieval(server, n_queries=10):
 # Simulation runner
 # ═══════════════════════════════════════════════════════════════════════════
 
+def lru_store_summary(server, snap):
+    """One-line live view of the lru_chroma store for per-round console output."""
+    mgr = getattr(server, "lru_memory", None)
+    if mgr is None:
+        return ""
+    entries = mgr.store.all_entries()
+    n_multi = sum(1 for e in entries if len(e.get("owners", []) or []) >= 2)
+    return (f"  │  store: {len(entries)} entries, {n_multi} shared(multi-owner), "
+            f"shared={snap['shared_bytes']/1024:.1f}KB, "
+            f"total={snap['total_bytes']/1024:.1f}KB, pending={mgr.pending_count()}")
+
+
 def run_simulation(preset_path, llm_name, embedding_name,
-                   rounds, consensus_threshold, memory_type, log_dir=None):
+                   rounds, consensus_threshold, memory_type,
+                   consensus_enabled=True, cache_strategy="lru",
+                   index_backend="chroma", log_dir=None):
     from BookWorld import BookWorld
 
     print(f"\n  Initialising BookWorld (memory_type={memory_type}) …")
@@ -198,6 +244,9 @@ def run_simulation(preset_path, llm_name, embedding_name,
         memory_top_k=5,
         consensus_threshold=consensus_threshold,
         memory_type=memory_type,
+        consensus_enabled=consensus_enabled,
+        cache_strategy=cache_strategy,
+        index_backend=index_backend,
     )
     bw.set_generator(
         rounds=rounds, save_dir="", if_save=0,
@@ -225,7 +274,8 @@ def run_simulation(preset_path, llm_name, embedding_name,
                     snapshots.append(snap)
                     if log_dir:
                         dump_round_log(server, prev_round, memory_type, log_dir)
-                    print(f"    Round {prev_round+1:>2}  │  time: {elapsed:.1f}s")
+                    extra = lru_store_summary(server, snap) if memory_type == "lru_chroma" else ""
+                    print(f"    Round {prev_round+1:>2}  │  time: {elapsed:.1f}s{extra}")
                 prev_round = cur
                 round_start = time.perf_counter()
     except Exception as e:
@@ -239,6 +289,8 @@ def run_simulation(preset_path, llm_name, embedding_name,
         snapshots.append(snap)
         if log_dir:
             dump_round_log(server, prev_round, memory_type, log_dir)
+        extra = lru_store_summary(server, snap) if memory_type == "lru_chroma" else ""
+        print(f"    Round {prev_round+1:>2}  │  time: {elapsed:.1f}s{extra}")
 
     print(f"  Finished {memory_type} — {len(snapshots)} rounds.")
 
@@ -338,10 +390,12 @@ def build_series(all_snaps, all_round_times, all_retr_times, role_codes):
 # Plotting
 # ═══════════════════════════════════════════════════════════════════════════
 
-COLORS  = {"no_consensus": "#e74c3c", "consensus": "#2ecc71", "gmemory": "#3498db"}
-LABELS  = {"no_consensus": "No Mechanism", "consensus": "Consensus", "gmemory": "G-Memory"}
-MARKERS = {"no_consensus": "o", "consensus": "s", "gmemory": "^"}
-KEYS    = ["no_consensus", "consensus", "gmemory"]
+COLORS  = {"no_consensus": "#e74c3c", "consensus": "#2ecc71", "gmemory": "#3498db",
+           "lru_chroma": "#9b59b6"}
+LABELS  = {"no_consensus": "No Mechanism", "consensus": "Consensus", "gmemory": "G-Memory",
+           "lru_chroma": "LRU+Chroma"}
+MARKERS = {"no_consensus": "o", "consensus": "s", "gmemory": "^", "lru_chroma": "D"}
+KEYS    = ["no_consensus", "consensus", "gmemory"]   # default; overridden in main() by --mechanisms
 
 
 def _kb(b):
@@ -541,48 +595,48 @@ def print_summary(series, role_codes, rounds_count, quality_scores):
     print(f"  MEMORY SIZE SUMMARY (KB)  —  after {rounds_count} rounds")
     print(f"  Each mechanism ran as an INDEPENDENT simulation")
     print(f"{'=' * 94}")
-    print(f"  {'Agent':<22} {'No Mechanism':>16} {'Consensus':>16} {'G-Memory':>16}")
-    print(f"  {'-' * 70}")
+    header = f"  {'Agent':<22}" + "".join(f"{LABELS[k]:>16}" for k in KEYS)
+    print(header)
+    print(f"  {'-' * (22 + 16 * len(KEYS))}")
     for code in role_codes:
         name = code.split("-")[0].replace("_", " ")
         vals = [_kb(series[k]["agents"][code][-1]) for k in KEYS]
-        print(f"  {name:<22} {vals[0]:>13.1f}KB {vals[1]:>13.1f}KB {vals[2]:>13.1f}KB")
+        print(f"  {name:<22}" + "".join(f"{v:>13.1f}KB" for v in vals))
     vals_s = [_kb(series[k]["shared"][-1]) for k in KEYS]
-    print(f"  {'Shared/World':<22} {vals_s[0]:>13.1f}KB {vals_s[1]:>13.1f}KB {vals_s[2]:>13.1f}KB")
-    print(f"  {'-' * 70}")
-    vals_t = [_kb(series[k]["total"][-1]) for k in KEYS]
-    print(f"  {'TOTAL':<22} {vals_t[0]:>13.1f}KB {vals_t[1]:>13.1f}KB {vals_t[2]:>13.1f}KB")
+    print(f"  {'Shared/World':<22}" + "".join(f"{v:>13.1f}KB" for v in vals_s))
+    print(f"  {'-' * (22 + 16 * len(KEYS))}")
+    vals_t = {k: _kb(series[k]["total"][-1]) for k in KEYS}
+    print(f"  {'TOTAL':<22}" + "".join(f"{vals_t[k]:>13.1f}KB" for k in KEYS))
 
-    nc_agent_total = sum(_kb(series["no_consensus"]["agents"][c][-1]) for c in role_codes)
-    con_agent_total = sum(_kb(series["consensus"]["agents"][c][-1]) for c in role_codes)
-    diff_agent = nc_agent_total - con_agent_total
-    pct_agent = (diff_agent / nc_agent_total * 100) if nc_agent_total > 0 else 0
-    print(f"  Per-agent total: No Mech={nc_agent_total:.1f}KB, "
-          f"Consensus={con_agent_total:.1f}KB "
-          f"(diff: {diff_agent:+.1f}KB / {pct_agent:+.1f}%)")
-
-    diff_total = vals_t[0] - vals_t[1]
-    pct_total = (diff_total / vals_t[0] * 100) if vals_t[0] > 0 else 0
-    print(f"  Overall total:   No Mech={vals_t[0]:.1f}KB, "
-          f"Consensus={vals_t[1]:.1f}KB "
-          f"(diff: {diff_total:+.1f}KB / {pct_total:+.1f}%)")
+    # Baseline comparison only when both reference mechanisms were run.
+    if "no_consensus" in KEYS and "consensus" in KEYS:
+        nc_agent_total = sum(_kb(series["no_consensus"]["agents"][c][-1]) for c in role_codes)
+        con_agent_total = sum(_kb(series["consensus"]["agents"][c][-1]) for c in role_codes)
+        diff_agent = nc_agent_total - con_agent_total
+        pct_agent = (diff_agent / nc_agent_total * 100) if nc_agent_total > 0 else 0
+        print(f"  Per-agent total: No Mech={nc_agent_total:.1f}KB, "
+              f"Consensus={con_agent_total:.1f}KB "
+              f"(diff: {diff_agent:+.1f}KB / {pct_agent:+.1f}%)")
+        diff_total = vals_t["no_consensus"] - vals_t["consensus"]
+        pct_total = (diff_total / vals_t["no_consensus"] * 100) if vals_t["no_consensus"] > 0 else 0
+        print(f"  Overall total:   No Mech={vals_t['no_consensus']:.1f}KB, "
+              f"Consensus={vals_t['consensus']:.1f}KB "
+              f"(diff: {diff_total:+.1f}KB / {pct_total:+.1f}%)")
 
     timing = series["timing"]
     print(f"\n  TIMING")
-    print(f"  {'-' * 70}")
+    print(f"  {'-' * (22 + 16 * len(KEYS))}")
     rt = timing["round_times"]
-    print(f"  {'Avg round time':<22} {np.mean(rt['no_consensus']):>13.1f}s "
-          f"{np.mean(rt['consensus']):>13.1f}s  {np.mean(rt['gmemory']):>13.1f}s")
+    print(f"  {'Avg round time':<22}" + "".join(f"{np.mean(rt[k]):>14.1f}s" for k in KEYS))
     retr = timing["retrieval"]
-    print(f"  {'Avg retrieval time':<22} {np.mean(retr['no_consensus'])*1000:>12.1f}ms "
-          f"{np.mean(retr['consensus'])*1000:>12.1f}ms {np.mean(retr['gmemory'])*1000:>12.1f}ms")
+    print(f"  {'Avg retrieval time':<22}" + "".join(f"{np.mean(retr[k])*1000:>13.1f}ms" for k in KEYS))
 
     if any(quality_scores.get(k) for k in KEYS):
         dims = list(next(v for v in quality_scores.values() if v).keys())
         print(f"\n  QUALITY SCORES (1-7)")
-        print(f"  {'-' * 70}")
-        print(f"  {'Dimension':<22} {'No Mechanism':>16} {'Consensus':>16} {'G-Memory':>16}")
-        print(f"  {'-' * 70}")
+        print(f"  {'-' * (22 + 16 * len(KEYS))}")
+        print(f"  {'Dimension':<22}" + "".join(f"{LABELS[k]:>16}" for k in KEYS))
+        print(f"  {'-' * (22 + 16 * len(KEYS))}")
         for d in dims:
             vals = [quality_scores.get(k, {}).get(d, "-") for k in KEYS]
             row = f"  {d:<22}"
@@ -600,6 +654,7 @@ RUN_CONFIGS = [
     ("no_consensus", "none"),
     ("consensus",    "consensus"),
     ("gmemory",      "gmemory"),
+    ("lru_chroma",   "lru_chroma"),
 ]
 
 def main():
@@ -613,6 +668,16 @@ def main():
     parser.add_argument("--threshold", type=int, default=10)
     parser.add_argument("--save_dir", type=str, default="./eval_memory_results")
     parser.add_argument("--skip_quality", action="store_true")
+    # lru_chroma ablation knobs (ignored by the consensus/gmemory mechanisms)
+    parser.add_argument("--cache_strategy", type=str, default="lru",
+                        choices=["lru", "fifo", "none"])
+    parser.add_argument("--index_backend", type=str, default="chroma",
+                        choices=["chroma", "keyword"])
+    parser.add_argument("--no_consensus", action="store_true",
+                        help="Disable the consensus merge (lru_chroma only).")
+    parser.add_argument("--mechanisms", type=str, default="",
+                        help="Comma-separated subset of run labels to execute "
+                             "(e.g. 'lru_chroma'). Default: all in RUN_CONFIGS.")
     args = parser.parse_args()
 
     config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
@@ -628,9 +693,18 @@ def main():
 
     os.makedirs(args.save_dir, exist_ok=True)
 
+    global KEYS
+    selected = [c for c in RUN_CONFIGS
+                if not args.mechanisms or c[0] in args.mechanisms.split(",")]
+    if not selected:
+        print(f"No mechanisms match --mechanisms={args.mechanisms!r}. "
+              f"Available: {[c[0] for c in RUN_CONFIGS]}")
+        return
+    KEYS = [label for label, _ in selected]
+
     print(f"\n{'─' * 72}")
-    print(f"  Memory Evaluation — 3-Way Comparison (INDEPENDENT runs)")
-    print(f"  Each mechanism runs as a separate simulation")
+    print(f"  Memory Evaluation — {len(selected)} mechanism(s) (INDEPENDENT runs)")
+    print(f"  Mechanisms: {', '.join(KEYS)}")
     print(f"  Preset   : {args.preset}")
     print(f"  LLM      : {args.llm}")
     print(f"  Rounds   : {args.rounds}")
@@ -644,9 +718,9 @@ def main():
     all_servers = {}
     role_codes = None
 
-    for run_idx, (label, mem_type) in enumerate(RUN_CONFIGS, 1):
+    for run_idx, (label, mem_type) in enumerate(selected, 1):
         print(f"\n{'━' * 54}")
-        print(f"  RUN {run_idx} / {len(RUN_CONFIGS)} :  {label.upper()}")
+        print(f"  RUN {run_idx} / {len(selected)} :  {label.upper()}")
         print(f"{'━' * 54}")
         log_dir = os.path.join(args.save_dir, "logs")
         snaps, codes, rt, retr, server, transcript = run_simulation(
@@ -654,6 +728,9 @@ def main():
             llm_name=args.llm, embedding_name=args.embedding,
             rounds=args.rounds, consensus_threshold=args.threshold,
             memory_type=mem_type, log_dir=log_dir,
+            consensus_enabled=not args.no_consensus,
+            cache_strategy=args.cache_strategy,
+            index_backend=args.index_backend,
         )
         all_snaps[label] = snaps
         all_round_times[label] = rt
@@ -678,7 +755,7 @@ def main():
         print(f"\n{'━' * 54}")
         print(f"  QUALITY EVALUATION (LLM-as-judge)")
         print(f"{'━' * 54}")
-        for label in [lbl for lbl, _ in RUN_CONFIGS]:
+        for label in [lbl for lbl, _ in selected]:
             print(f"\n  Evaluating {label} …")
             try:
                 scores = evaluate_quality(
